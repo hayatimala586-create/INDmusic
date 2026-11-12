@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="theme-color" content="#1769d2">
+        <title>INDmusic</title>
+        <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            --green: #1769d2;
+            --dark: #fff;
+            --panel: #f5f5f5;
+            --muted: #666;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            min-width: 320px;
+            min-height: 100vh;
+            margin: 0;
+            background: #fff;
+            color: #222;
+        }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        [hidden] { display: none !important; }
+
+        .page { display: none; min-height: 100vh; }
+        .page.active { display: flex; }
+        #authPage { align-items: center; justify-content: center; padding: 24px; }
+        .login-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            width: min(650px, 100%);
+            margin: auto;
+            padding: 30px;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 10px 25px rgb(0 0 0 / 12%);
+        }
+        .avatar-area { width: 150px; height: 150px; flex: 0 0 150px; perspective: 400px; }
+        .avatar {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform .6s cubic-bezier(.4, 0, .2, 1);
+        }
+        .avatar-front, .avatar-back {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #333;
+            border-radius: 50%;
+            backface-visibility: hidden;
+        }
+        .avatar-front { background: #1769d2; }
+        .avatar-back { transform: rotateY(180deg); background: #1253a4; }
+        .avatar-back::after {
+            position: absolute;
+            top: -10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #333;
+            content: "";
+        }
+        .avatar.look-away { --face-turn: 180deg; transform: rotateY(var(--face-turn)); }
+        .face { display: flex; gap: 15px; }
+        .eye {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform .12s ease-out;
+        }
+        .pupil { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: transform .12s ease-out; }
+                @keyframes shake {
+            0%, 100% { transform: translateX(0) rotateY(var(--face-turn, 0deg)); }
+            20%, 60% { transform: translateX(-8px) rotateY(calc(var(--face-turn, 0deg) - 18deg)); }
+            40%, 80% { transform: translateX(8px) rotateY(calc(var(--face-turn, 0deg) + 18deg)); }
+        }
+        .avatar.wrong-password { animation: shake .6s ease-in-out; }
+
+        .form-area { flex: 1; min-width: 0; }
+        .form-area h1 { margin: 0 0 8px; color: #1769d2; font-size: 26px; }
+        .form-intro { margin: 0 0 20px; color: #666; font-size: 14px; }
+        .input-group { position: relative; margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #444; font-size: 14px; }
+        .input-group input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 44px 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            color: #222;
+            background: #fff;
+            font-size: 16px;
+        }
+        .input-group input:focus { border-color: var(--green); }
+        .toggle-password {
+            position: absolute;
+            top: 30px;
+            right: 8px;
+            min-width: 36px;
+            min-height: 34px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #666;
+            font-size: 13px;
+        }
+        .toggle-password:hover { background: #f1f1f1; }
+        .info-label { display: none; margin: 0 0 14px; font-size: 14px; font-weight: 600; }
+        .info-label.visible { display: block; }
+        .btn-main-action {
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 8px;
+            background: #1769d2;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .btn-main-action:hover { background: #1253a4; }
+        .switch-page-text { margin: 15px 0 0; color: #b3b3b3; text-align: center; font-size: 14px; }
+        .switch-page-text button { padding: 0; border: 0; background: none; color: var(--green); font-weight: 700; text-decoration: underline; }
+
+        #dashboardPage { height: 100vh; min-height: 500px; background: var(--dark); color: #222; }
+        .dashboard-layout { display: flex; width: 100%; height: 100%; }
+        .sidebar {
+            display: flex;
+            flex: 0 0 240px;
+            flex-direction: column;
+            padding: 24px 12px;
+            border-right: 1px solid #1253a4;
+            background: #1769d2;
+        }
+        .brand-logo { display: flex; align-items: center; gap: 8px; margin: 0 0 25px; padding: 0 0 0 12px; border: 0; background: transparent; color: #fff; font: inherit; font-size: 22px; font-weight: 700; text-align: left; cursor: pointer; }
+        .brand-face { display: flex; width: 34px; height: 34px; flex: 0 0 34px; align-items: center; justify-content: center; gap: 4px; border: 2px solid #fff; border-radius: 50%; background: #1253a4; }
+        .brand-eye { display: flex; width: 9px; height: 9px; align-items: center; justify-content: center; border-radius: 50%; background: #fff; }
+        .brand-pupil { width: 4px; height: 4px; border-radius: 50%; background: #222; transition: transform .12s ease-out; }
+        .brand-name { white-space: nowrap; }
+        .sidebar-menu { display: flex; flex-direction: column; gap: 8px; }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #ffe5e9;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 700;
+            transition: background .2s, color .2s;
+        }
+        .menu-item {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
+            transition: background .28s, color .28s, border-color .28s, box-shadow .28s, transform .28s;
+        }
+        .menu-item:hover { background: rgb(255 255 255 / 12%); color: #fff; }
+        .menu-item.active {
+            transform: translateX(3px);
+            border-color: rgb(255 255 255 / 34%);
+            background: linear-gradient(110deg, rgb(255 255 255 / 26%), rgb(255 255 255 / 12%));
+            color: #fff;
+            box-shadow: 0 8px 22px rgb(8 43 91 / 22%), inset 0 1px 0 rgb(255 255 255 / 35%);
+            -webkit-backdrop-filter: blur(14px) saturate(1.5);
+            backdrop-filter: blur(14px) saturate(1.5);
+            animation: menu-glass-in .32s cubic-bezier(.2, .75, .25, 1) both;
+        }
+        .menu-item.active::before {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 15%, rgb(255 255 255 / 18%) 48%, transparent 78%);
+            content: "";
+            pointer-events: none;
+            animation: menu-glass-shine .65s ease-out both;
+        }
+        @keyframes menu-glass-in {
+            from { opacity: .65; transform: translateX(-5px) scale(.97); }
+            to { opacity: 1; transform: translateX(3px) scale(1); }
+        }
+        @keyframes menu-glass-shine {
+            from { transform: translateX(-110%); }
+            to { transform: translateX(110%); }
+        }
+        .user-panel-left { margin-top: auto; padding: 12px; border-top: 1px solid #1253a4; }
+        .user-info { overflow-wrap: anywhere; color: #ffe5e9; font-size: 14px; }
+        .user-info strong { color: #fff; }
+        .main-content {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            padding: 40px 40px 100px;
+            background: linear-gradient(to bottom, #fff, #f7f7f7 360px);
+        }
+        .sub-section { display: none; }
+        .sub-section.active {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            display: block;
+            padding: clamp(20px, 3vw, 32px);
+            border: 1px solid rgb(255 255 255 / 78%);
+            border-radius: 24px;
+            background: rgb(255 255 255 / 62%);
+            box-shadow: 0 18px 48px rgb(23 105 210 / 10%), inset 0 1px 0 rgb(255 255 255 / 90%);
+            -webkit-backdrop-filter: blur(24px) saturate(1.5);
+            backdrop-filter: blur(24px) saturate(1.5);
+            animation: liquid-glass-in .48s cubic-bezier(.2, .75, .25, 1) both;
+        }
+        .sub-section.active::before {
+            position: absolute;
+            inset: 0 0 auto;
+            z-index: -1;
+            height: 180px;
+            background: radial-gradient(ellipse at 12% 0%, rgb(81 158 255 / 16%), transparent 68%);
+            content: "";
+            pointer-events: none;
+        }
+        @keyframes liquid-glass-in {
+            from { opacity: 0; transform: translateY(14px) scale(.985); filter: blur(8px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        .sub-section h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 32px); }
+        .section-description { margin: 0 0 24px; color: var(--muted); }
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        .search-container { max-width: 400px; margin-bottom: 25px; }
+        .search-container input {
+            width: 100%;
+            padding: 12px 18px;
+            border: 1px solid transparent;
+            border-radius: 25px;
+            outline: none;
+            background: #f1f1f1;
+            color: #222;
+            font-size: 14px;
+        }
+        .search-container input:focus { border-color: var(--green); background: #fff; }
+        .upload-card { margin-top: 20px; padding: 50px 20px; border: 2px dashed #1769d2; border-radius: 8px; background: var(--panel); text-align: center; }
+        .upload-card:hover, .upload-card:focus-within { border-color: var(--green); }
+        .upload-card p { color: var(--muted); }
+        .upload-card input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+        .upload-label { display: inline-block; margin-top: 20px; padding: 12px 30px; border-radius: 25px; background: #fff; color: #000; cursor: pointer; font-weight: 700; transition: transform .2s; }
+        .upload-label:hover { transform: scale(1.04); }
+        .music-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .music-item { display: flex; align-items: center; gap: 15px; padding: 14px 16px; border-radius: 6px; background: var(--panel); }
+        .music-item:hover { background: #ededed; }
+        .music-details { flex: 1; min-width: 0; }
+        .music-name { overflow: hidden; color: #222; font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+        .music-size { margin-top: 4px; color: var(--muted); font-size: 12px; }
+        audio { width: min(280px, 35vw); height: 36px; }
+        .playback-options { display: flex; align-items: center; gap: 8px; }
+        .playback-options select, .loop-toggle {
+            min-height: 36px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            color: #222;
+        }
+        .loop-toggle[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
+        .lyrics-button, .lyrics-edit-button { min-height: 36px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #1769d2; font-weight: 600; }
+        .lyrics-button:disabled { cursor: not-allowed; opacity: .35; }
+        .lyrics-dialog { width: min(560px, calc(100% - 28px)); max-height: min(80vh, 720px); padding: 22px; border: 0; border-radius: 14px; color: #222; box-shadow: 0 18px 60px rgb(0 0 0 / 30%); }
+        .lyrics-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+        .lyrics-dialog h2 { margin: 0 0 8px; }
+        .lyrics-dialog-help { color: var(--muted); font-size: 13px; }
+        .lyrics-editor { width: 100%; min-height: 180px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; resize: vertical; }
+        .lyrics-display { max-height: 45vh; overflow-y: auto; padding: 12px; text-align: center; }
+        .lyrics-line { margin: 10px 0; color: #777; transition: color .15s, transform .15s; }
+        .lyrics-line.active { color: #1769d2; font-weight: 700; transform: scale(1.04); }
+        .lyrics-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        .lyrics-dialog-actions button { padding: 9px 13px; border: 1px solid #ddd; border-radius: 7px; background: #fff; color: #222; }
+        .lyrics-dialog-actions #lyricsSaveButton { border-color: #1769d2; background: #1769d2; color: #fff; }
+        .btn-delete { padding: 8px; border: 0; background: transparent; color: var(--muted); font-size: 18px; }
+        .btn-delete:hover { color: #ff4d4d; }
+        .empty-state { padding: 40px 0; color: var(--muted); text-align: center; font-style: italic; }
+        .playlist-form { display: flex; gap: 10px; max-width: 560px; margin: 20px 0; }
+        .playlist-form input, .playlist-card select { min-height: 42px; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #222; }
+        .playlist-form input { flex: 1; min-width: 0; }
+        .playlist-form button, .playlist-add-button { padding: 9px 16px; border: 0; border-radius: 8px; background: #1769d2; color: #fff; font-weight: 700; }
+        .playlist-list { display: flex; flex-direction: column; gap: 16px; }
+        .playlist-card { padding: 18px; border-radius: 8px; background: var(--panel); }
+        .playlist-card h2 { margin: 0 0 6px; font-size: 20px; }
+        .playlist-card .music-grid { margin-top: 12px; }
+        .playlist-add-row { display: flex; gap: 8px; }
+        .playlist-add-row select { flex: 1; min-width: 0; }
+        .playlist-card .empty-state { padding: 18px 0; }
+        .feed-owner { margin: 0 0 5px; color: var(--muted); font-size: 12px; }
+        .video-upload { margin: 18px 0; }
+        .public-long-video-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+        .public-long-video-card { overflow: hidden; border-radius: 12px; background: #171717; color: #fff; }
+        .public-long-video-card video { display: block; width: 100%; max-height: min(65vh, 600px); background: #000; }
+        .public-long-video-info { padding: 12px 14px; }
+        .public-long-video-info p { margin: 5px 0; }
+        .video-feed { display: flex; flex-direction: column; gap: 22px; height: min(76vh, 760px); min-height: 420px; overflow-y: auto; scroll-snap-type: y mandatory; }
+        .short-video-card { display: grid; flex: 0 0 100%; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 100%; padding: 16px; border-radius: 14px; background: #171717; color: #fff; scroll-snap-align: start; }
+        .short-video-card video { width: 100%; height: 100%; max-height: 100%; border-radius: 10px; background: #000; object-fit: contain; }
+        .video-actions { display: flex; flex-direction: column; gap: 10px; }
+        .video-actions button { min-width: 78px; padding: 10px 8px; border: 1px solid #666; border-radius: 9px; background: #292929; color: #fff; }
+        .video-actions button[aria-pressed="true"] { color: #ff7188; border-color: #ff7188; }
+        .video-caption, .video-views, .video-comments { grid-column: 1 / -1; overflow-wrap: anywhere; }
+        .video-views { margin: -8px 0 0; color: #bbb; font-size: 13px; }
+        .video-comments { margin: 0; padding-left: 20px; color: #ddd; font-size: 13px; }
+        .profile-card { max-width: 560px; padding: 22px; border-radius: 10px; background: var(--panel); }
+        .profile-card .input-group input { padding-right: 12px; }
+        .instrument-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; max-width: 760px; margin-top: 28px; }
+        .instrument-choice { display: flex; min-height: 180px; flex-direction: column; align-items: center; justify-content: center; gap: 9px; border: 1px solid #ddd; border-radius: 16px; background: #fff; color: #222; box-shadow: 0 6px 18px rgb(0 0 0 / 7%); transition: transform .2s, border-color .2s, box-shadow .2s; }
+        .instrument-choice:hover, .instrument-choice:focus-visible { transform: translateY(-3px); border-color: var(--green); box-shadow: 0 10px 24px rgb(0 0 0 / 12%); }
+        .instrument-choice strong { font-size: 19px; }
+        .instrument-choice > span:last-child { color: var(--muted); font-size: 13px; }
+        .instrument-choice-icon { font-size: 42px; }
+        .instrument-workspace { max-width: 900px; }
+        .instrument-workspace.is-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            max-width: none;
+            overflow: auto;
+            padding: 24px clamp(16px, 4vw, 56px) 40px;
+            background: #fff;
+        }
+        .instrument-workspace.is-fullscreen .instrument-group { max-width: 1100px; margin: 18px auto 28px; }
+        .instrument-workspace.is-fullscreen .piano-scroll { max-height: calc(100vh - 250px); }
+        .instrument-workspace.is-fullscreen .drum-pads { width: min(1000px, 100%); }
+        .instrument-workspace.is-fullscreen .guitar-art { width: min(1100px, 100%); }
+        .instrument-back { margin: 8px 0 14px; padding: 9px 13px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #333; font-weight: 700; }
+        .instrument-back:hover { border-color: var(--green); color: var(--green); }
+        .instrument-group { margin: 20px 0 28px; }
+        .instrument-group h2 { margin: 0 0 12px; font-size: 21px; }
+        .instrument-note { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+        .piano-scroll { overflow-x: auto; padding: 4px 2px 14px; border-radius: 8px; background: #ddd; }
+        .piano-keys { position: relative; height: 190px; }
+        .piano-white-keys { display: flex; height: 190px; }
+        .piano-key { border: 1px solid #333; border-radius: 0 0 5px 5px; cursor: pointer; touch-action: none; }
+        .piano-key.white { position: relative; z-index: 1; flex: 0 0 38px; height: 190px; background: #fff; color: #555; }
+        .piano-key.white span { position: absolute; right: 0; bottom: 8px; left: 0; font-size: 10px; text-align: center; pointer-events: none; }
+        .piano-key.black { position: absolute; z-index: 2; top: 0; width: 24px; height: 118px; background: #222; color: #fff; }
+        .piano-key:active, .piano-key.is-playing { background: #1769d2; color: #fff; }
+        .guitar-scroll { overflow-x: auto; padding: 10px; border: 1px solid #bbb; border-radius: 14px; background: linear-gradient(135deg, #20170f, #49331f); }
+        .guitar-art { display: block; width: min(900px, 100%); min-width: 720px; height: auto; margin: auto; }
+        .guitar-fret-marker { cursor: pointer; outline: none; }
+        .guitar-fret-marker circle { fill: transparent; stroke: transparent; stroke-width: 2; }
+        .guitar-fret-marker:hover circle, .guitar-fret-marker:focus circle, .guitar-fret-marker.is-playing circle { fill: rgb(255 255 255 / 55%); stroke: #fff; }
+        .drum-pads { display: block; width: min(760px, 100%); height: auto; margin: 20px auto; overflow: hidden; border: 1px solid #333; border-radius: 18px; background: radial-gradient(ellipse at 50% 85%, #252630, #101116 76%); box-shadow: inset 0 0 34px #000; }
+        .drum-pad { cursor: pointer; outline: none; touch-action: manipulation; }
+        .drum-pad:hover .drum-surface, .drum-pad:focus .drum-surface { filter: brightness(1.22); }
+        .drum-pad:active .drum-surface { filter: brightness(1.4); }
+        .drum-shell { fill: url(#drumShell); stroke: #111217; stroke-width: 5; }
+        .drum-head { fill: url(#drumHead); stroke: #d7d8dc; stroke-width: 4; }
+        .drum-rim { fill: none; stroke: url(#drumChrome); stroke-width: 7; }
+        .drum-lug { fill: url(#drumChrome); stroke: #35363b; stroke-width: 2; }
+        .drum-cymbal { fill: url(#drumGold); stroke: #bd9a46; stroke-width: 2; }
+        .drum-label { fill: #25252a; font: 700 12px sans-serif; text-anchor: middle; pointer-events: none; }
+        .drum-hardware { fill: none; stroke: #aeb2ba; stroke-width: 5; stroke-linecap: round; }
+        @media (max-width: 650px) {
+            .drum-pads { border-radius: 12px; }
+            .drum-label { font-size: 14px; }
+        }
+        .instrument-status { min-height: 22px; color: var(--muted); font-size: 13px; }
+        .instrument-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 8px; }
+        .instrument-controls button { padding: 10px 16px; border: 0; border-radius: 8px; background: #1769d2; color: #fff; font-weight: 700; }
+        .instrument-controls button:disabled { cursor: not-allowed; opacity: .5; }
+        .logout-corner-btn { position: fixed; right: 25px; bottom: 25px; z-index: 2; padding: 11px 18px; border: 0; border-radius: 25px; background: #1769d2; color: #fff; font-weight: 700; }
+        .logout-corner-btn:hover { background: #a92727; }
+
+        @media (max-width: 650px) {
+            #authPage { padding: 16px; }
+            .login-container { flex-direction: column; gap: 22px; padding: 24px 20px; }
+            .avatar-area { width: 110px; height: 110px; flex-basis: 110px; }
+            .form-area { width: 100%; }
+            #dashboardPage { height: 100dvh; }
+            .sidebar { flex-basis: 74px; align-items: center; padding: 18px 8px; }
+            .brand-logo { justify-content: center; padding: 0; font-size: 0; }
+            .brand-name { display: none; }
+            .menu-item { justify-content: center; padding: 13px 10px; font-size: 0; }
+            .menu-item span { font-size: 20px; }
+            .user-panel-left { width: 100%; padding: 12px 2px; text-align: center; }
+            .user-info { overflow: hidden; font-size: 10px; text-overflow: ellipsis; }
+            .main-content { padding: 28px 16px 90px; }
+            .instrument-workspace.is-fullscreen { padding: 14px 12px 28px; }
+            .instrument-workspace.is-fullscreen .instrument-back { position: sticky; top: 0; z-index: 2; }
+            .instrument-workspace.is-fullscreen .instrument-controls { position: sticky; top: 48px; z-index: 2; padding: 8px 0; background: #fff; }
+            .instrument-workspace.is-fullscreen .piano-scroll { max-height: calc(100dvh - 210px); }
+            .music-item { flex-wrap: wrap; gap: 10px; }
+            .playlist-form { flex-direction: column; }
+            .playlist-add-row { flex-direction: column; }
+            .music-details { flex-basis: calc(100% - 40px); }
+            audio { order: 3; width: 100%; }
+            .playback-options { order: 4; width: 100%; }
+            .btn-delete { order: 2; margin-left: auto; }
+            .logout-corner-btn { right: 14px; bottom: 14px; }
+            .video-feed { height: 70vh; min-height: 360px; }
+            .short-video-card { grid-template-columns: minmax(0, 1fr) auto; padding: 9px; gap: 8px; }
+            .video-actions { gap: 6px; }
+            .video-actions button { min-width: 58px; padding: 8px 4px; font-size: 12px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <main id="authPage" class="page active">
+        <section class="login-container" aria-label="Masuk atau daftar">
+            <div class="avatar-area" aria-hidden="true">
+                <div class="avatar" id="avatar">
+                    <div class="avatar-front">
+                        <div class="face">
+                            <div class="eye"><div class="pupil"></div></div>
+                            <div class="eye"><div class="pupil"></div></div>
+                        </div>
+                    </div>
+                    <div class="avatar-back"></div>
+                </div>
+            </div>
+            <div class="form-area">
+                <h1 id="authTitle">Selamat datang!</h1>
+                <p class="form-intro" id="authIntro">Masuk untuk membuka koleksi musikmu.</p>
+                <form id="authForm" novalidate>
+                    <div class="input-group">
+                        <label for="username">Nama pengguna</label>
+                        <input id="username" name="username" type="text" autocomplete="username" minlength="3" maxlength="24" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Kata sandi</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" minlength="4" required>
+                        <button class="toggle-password" id="togglePassword" type="button" aria-label="Tampilkan kata sandi" aria-pressed="false">Lihat</button>
+                    </div>
+                    <p class="info-label" id="authMessage" role="status" aria-live="polite"></p>
+                    <button class="btn-main-action" id="authSubmit" type="submit">Masuk</button>
+                </form>
+                <p class="switch-page-text">
+                    <span id="switchPrompt">Belum punya akun?</span>
+                    <button id="switchAuth" type="button">Daftar</button>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <main id="dashboardPage" class="page">
+        <div class="dashboard-layout">
+            <aside class="sidebar">
+                <button class="brand-logo" id="homeLogo" type="button" aria-label="INDmusic, kembali ke beranda">
+                    <span class="brand-face" aria-hidden="true"><span class="brand-eye"><span class="brand-pupil"></span></span><span class="brand-eye"><span class="brand-pupil"></span></span></span>
+                    <span class="brand-name">INDmusic</span>
+                </button>
+                <nav class="sidebar-menu" aria-label="Menu utama">
+                    <button class="menu-item active" type="button" data-section="home"><span aria-hidden="true">⌂</span> Beranda</button>
+                    <button class="menu-item" type="button" data-section="library"><span aria-hidden="true">♪</span> Koleksi musik</button>
+                    <button class="menu-item" type="button" data-section="playlists"><span aria-hidden="true">▤</span> Playlist</button>
+                    <button class="menu-item" type="button" data-section="upload"><span aria-hidden="true">＋</span> Tambah musik</button>
+                    <button class="menu-item" type="button" data-section="videos"><span aria-hidden="true">▣</span> FYP · Video pendek</button>
+                    <button class="menu-item" type="button" data-section="longVideos"><span aria-hidden="true">▶</span> Video panjang</button>
+                    <button class="menu-item" type="button" data-section="instruments"><span aria-hidden="true">🎹</span> Instrumen</button>
+                    <button class="menu-item" type="button" data-section="profile"><span aria-hidden="true">◉</span> Profil</button>
+                </nav>
+                <div class="user-panel-left"><p class="user-info">Masuk sebagai <strong id="signedInUser"></strong></p></div>
+            </aside>
+
+            <section class="main-content" aria-label="Dashboard musik">
+                <div class="sub-section active" id="homeSection">
+                    <h1>Beranda</h1>
+                    <p class="section-description">Dengarkan musik yang diunggah oleh semua akun di browser ini. Musik tidak dibagikan ke perangkat lain.</p>
+                    <div class="search-container">
+                        <label for="homeSearchInput" class="visually-hidden">Cari musik dan video panjang di Beranda</label>
+                        <input id="homeSearchInput" type="search" placeholder="Cari di Beranda..." autocomplete="off">
+                    </div>
+                    <div class="music-grid" id="publicMusicGrid" aria-live="polite"></div>
+                    <p class="empty-state" id="publicEmptyState">Belum ada musik yang dipublikasikan.</p>
+                    <h2>Video panjang</h2>
+                    <p class="section-description">Video panjang yang dipublikasikan oleh akun di browser ini.</p>
+                    <div class="public-long-video-list" id="publicLongVideoList" aria-live="polite"></div>
+                    <p class="empty-state" id="publicLongVideoEmptyState">Belum ada video panjang yang dipublikasikan.</p>
+                </div>
+                <div class="sub-section" id="librarySection">
+                    <h1>Koleksi musik</h1>
+                    <p class="section-description">Musik yang kamu tambahkan di sesi ini. Tekan “Unggah ke Beranda” agar akun lain di browser ini bisa mendengarkannya.</p>
+                    <div class="search-container">
+                        <label for="searchInput" class="visually-hidden">Cari musik</label>
+                        <input id="searchInput" type="search" placeholder="Cari musik..." autocomplete="off">
+                    </div>
+                    <div class="music-grid" id="musicGrid" aria-live="polite"></div>
+                    <p class="empty-state" id="emptyState">Belum ada musik. Tambahkan file audio dari perangkatmu.</p>
+                </div>
+                <div class="sub-section" id="playlistsSection">
+                    <h1>Playlist</h1>
+                    <p class="section-description">Buat playlist sendiri dan tambahkan lagu dari koleksi musikmu.</p>
+                    <form class="playlist-form" id="playlistForm">
+                        <label class="visually-hidden" for="playlistName">Nama playlist baru</label>
+                        <input id="playlistName" type="text" maxlength="40" placeholder="Nama playlist baru" required>
+                        <button type="submit">Buat playlist</button>
+                    </form>
+                    <div class="playlist-list" id="playlistList" aria-live="polite"></div>
+                    <p class="empty-state" id="playlistEmptyState">Belum ada playlist. Buat playlist pertamamu!</p>
+                </div>
+                <div class="sub-section" id="uploadSection">
+                    <h1>Tambah musik</h1>
+                    <p class="section-description">Pilih satu atau beberapa file audio dari perangkatmu.</p>
+                    <div class="upload-card">
+                        <p>Format audio yang didukung tergantung browser, misalnya MP3, WAV, dan OGG.</p>
+                        <label class="upload-label" for="musicInput">Pilih file audio</label>
+                        <input id="musicInput" type="file" accept="audio/*" multiple>
+                    </div>
+                </div>
+                <div class="sub-section" id="videosSection">
+                    <h1>Video pendek</h1>
+                    <p class="section-description">Video baru menjadi draf. Tekan “Unggah ke FYP” agar dapat dilihat akun lain di browser ini. File belum dibagikan ke perangkat lain.</p>
+                    <div class="upload-card video-upload">
+                        <p>Pilih video dari perangkatmu.</p>
+                        <label class="upload-label" for="videoInput">Unggah video</label>
+                        <input id="videoInput" type="file" accept="video/*" multiple>
+                    </div>
+                    <div class="video-feed" id="videoFeed" aria-live="polite"></div>
+                    <p class="empty-state" id="videoEmptyState">Belum ada video. Unggah video pertama!</p>
+                </div>
+                <div class="sub-section" id="longVideosSection">
+                    <h1>Video panjang</h1>
+                    <p class="section-description">Unggah dan tonton video berdurasi hingga 2 jam. Video tersimpan di browser ini.</p>
+                    <div class="upload-card video-upload">
+                        <p>Pilih video berdurasi maksimal 2 jam.</p>
+                        <label class="upload-label" for="longVideoInput">Unggah video panjang</label>
+                        <input id="longVideoInput" type="file" accept="video/*" multiple>
+                    </div>
+                    <div class="video-feed" id="longVideoFeed" aria-live="polite"></div>
+                    <p class="empty-state" id="longVideoEmptyState">Belum ada video panjang. Unggah video pertama!</p>
+                </div>
+                <div class="sub-section" id="instrumentsSection">
+                    <h1>Instrumen</h1>
+                    <p class="section-description">Pilih instrumen untuk membuka ruang bermainnya.</p>
+                    <div class="instrument-picker" id="instrumentPicker">
+                        <button class="instrument-choice" type="button" data-instrument="piano">
+                            <span class="instrument-choice-icon" aria-hidden="true">🎹</span>
+                            <strong>Piano</strong>
+                            <span>88 tuts</span>
+                        </button>
+                        <button class="instrument-choice" type="button" data-instrument="guitar">
+                            <span class="instrument-choice-icon" aria-hidden="true">🎸</span>
+                            <strong>Gitar</strong>
+                            <span>6 senar</span>
+                        </button>
+                        <button class="instrument-choice" type="button" data-instrument="drums">
+                            <span class="instrument-choice-icon" aria-hidden="true">🥁</span>
+                            <strong>Drum</strong>
+                            <span>Drum pad</span>
+                        </button>
+                    </div>
+                    <div class="instrument-workspace" id="instrumentWorkspace" hidden>
+                        <button class="instrument-back" id="instrumentBack" type="button">← Semua instrumen</button>
+                        <div class="instrument-controls">
+                            <button id="recordMusicButton" type="button">● Mulai rekam</button>
+                            <button id="playMusicButton" type="button" disabled>▶ Putar rekaman</button>
+                            <button id="clearMusicButton" type="button" disabled>Hapus rekaman</button>
+                        </div>
+                        <p class="instrument-status" id="instrumentStatus" role="status" aria-live="polite">Pilih instrumen untuk mulai bermain.</p>
+                        <section class="instrument-group" id="pianoInstrument" aria-labelledby="pianoHeading" hidden>
+                            <h2 id="pianoHeading">Piano 88 tuts</h2>
+                            <p class="instrument-note">Geser ke kiri atau kanan untuk melihat seluruh rentang piano.</p>
+                            <div class="piano-scroll" id="pianoScroll" tabindex="0" aria-label="Piano, geser horizontal untuk melihat semua tuts">
+                                <div class="piano-keys" id="pianoKeys"><div class="piano-white-keys" id="pianoWhiteKeys"></div></div>
+                            </div>
+                        </section>
+                        <section class="instrument-group" id="guitarInstrument" aria-labelledby="guitarHeading" hidden>
+                            <h2 id="guitarHeading">Gitar</h2>
+                            <p class="instrument-note">Pilih senar dan fret pada gitar akustik untuk memainkan nadanya.</p>
+                            <div class="guitar-scroll">
+                                <svg class="guitar-art" id="guitarBoard" viewBox="0 0 900 360" role="group" aria-label="Gitar akustik interaktif">
+                                    <defs>
+                                        <linearGradient id="guitarBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3c875"/><stop offset=".48" stop-color="#a95122"/><stop offset="1" stop-color="#5a2415"/></linearGradient>
+                                        <linearGradient id="guitarNeck" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d5a66b"/><stop offset="1" stop-color="#70401f"/></linearGradient>
+                                    </defs>
+                                    <path d="M277 127 L865 127 L865 233 L277 233 Z" fill="url(#guitarNeck)" stroke="#29170f" stroke-width="8"/>
+                                    <path d="M80 180 C72 141 111 119 150 133 C177 93 245 105 254 146 C296 150 311 174 300 204 C285 235 253 242 225 224 C190 263 131 250 127 218 C93 224 74 205 80 180Z" fill="url(#guitarBody)" stroke="#29170f" stroke-width="9"/>
+                                    <path d="M277 127 L277 233" stroke="#e8c181" stroke-width="7"/>
+                                    <path d="M112 176 C128 151 165 151 180 177 C166 201 129 204 112 176Z" fill="#27150f" stroke="#e8d0a0" stroke-width="5"/>
+                                    <path d="M214 153 L225 207" stroke="#332016" stroke-width="13"/>
+                                    <path d="M267 132 L267 228" stroke="#f0d298" stroke-width="8"/>
+                                    <path d="M854 132 L854 228" stroke="#eee0c1" stroke-width="8"/>
+                                    <g stroke="#d8d0bd" stroke-width="2">
+                                        <path d="M120 145 L860 145"/><path d="M120 159 L860 159"/><path d="M120 173 L860 173"/>
+                                        <path d="M120 187 L860 187"/><path d="M120 201 L860 201"/><path d="M120 215 L860 215"/>
+                                    </g>
+                                    <g stroke="#382116" stroke-width="3" opacity=".9">
+                                        <path d="M320 127 L320 233"/><path d="M365 127 L365 233"/><path d="M410 127 L410 233"/><path d="M455 127 L455 233"/>
+                                        <path d="M500 127 L500 233"/><path d="M545 127 L545 233"/><path d="M590 127 L590 233"/><path d="M635 127 L635 233"/>
+                                        <path d="M680 127 L680 233"/><path d="M725 127 L725 233"/><path d="M770 127 L770 233"/><path d="M815 127 L815 233"/>
+                                    </g>
+                                    <g id="guitarNotes"></g>
+                                </svg>
+                            </div>
+                        </section>
+                        <section class="instrument-group" id="drumInstrument" aria-labelledby="drumHeading" hidden>
+                            <h2 id="drumHeading">Drum</h2>
+                            <p class="instrument-note">Ketuk pad untuk memainkan suara drum.</p>
+                            <svg class="drum-pads" viewBox="0 0 680 390" role="group" aria-label="Set drum interaktif">
+                                <defs>
+                                    <linearGradient id="drumShell" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#54565d"/><stop offset=".18" stop-color="#17181e"/><stop offset=".5" stop-color="#45464c"/><stop offset=".82" stop-color="#101116"/><stop offset="1" stop-color="#686a70"/></linearGradient>
+                                    <radialGradient id="drumHead" cx="42%" cy="30%" r="75%"><stop stop-color="#fff"/><stop offset=".72" stop-color="#e0e0df"/><stop offset="1" stop-color="#aaaeb3"/></radialGradient>
+                                    <linearGradient id="drumChrome" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#555860"/><stop offset=".35" stop-color="#f4f5f7"/><stop offset=".65" stop-color="#8d9097"/><stop offset="1" stop-color="#e7e8eb"/></linearGradient>
+                                    <radialGradient id="drumGold" cx="45%" cy="38%" r="68%"><stop stop-color="#fff1a1"/><stop offset=".24" stop-color="#c69b37"/><stop offset=".53" stop-color="#f6d568"/><stop offset=".78" stop-color="#9b7426"/><stop offset="1" stop-color="#f5dc85"/></radialGradient>
+                                    <filter id="drumShadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="2" dy="7" stdDeviation="5" flood-color="#000" flood-opacity=".65"/></filter>
+                                </defs>
+                                <g class="drum-hardware">
+                                    <path d="M95 64 L95 344 M585 65 L585 340 M95 215 L148 350 M585 150 L535 350 M256 150 L256 266 M424 150 L424 266"/>
+                                    <path d="M66 345 L125 345 M555 345 L615 345 M225 270 L286 270 M394 270 L454 270"/>
+                                </g>
+                                <g class="drum-pad" data-drum="crash" role="button" tabindex="0" aria-label="Mainkan simbal crash">
+                                    <ellipse class="drum-surface drum-cymbal" cx="95" cy="65" rx="83" ry="34" transform="rotate(-7 95 65)" filter="url(#drumShadow)"/>
+                                    <ellipse cx="95" cy="65" rx="55" ry="22" fill="none" stroke="#ffe89a" stroke-opacity=".6" stroke-width="2"/>
+                                    <ellipse cx="95" cy="65" rx="27" ry="11" fill="none" stroke="#8d6b24" stroke-opacity=".65" stroke-width="2"/>
+                                    <circle cx="95" cy="63" r="6" fill="#444"/><text class="drum-label" x="95" y="111">CRASH</text>
+                                </g>
+                                <g class="drum-pad" data-drum="openHat" role="button" tabindex="0" aria-label="Mainkan hi-hat terbuka">
+                                    <ellipse class="drum-surface drum-cymbal" cx="585" cy="68" rx="78" ry="32" transform="rotate(7 585 68)" filter="url(#drumShadow)"/>
+                                    <ellipse cx="585" cy="68" rx="52" ry="21" fill="none" stroke="#ffe89a" stroke-opacity=".6" stroke-width="2"/>
+                                    <ellipse cx="585" cy="68" rx="25" ry="10" fill="none" stroke="#8d6b24" stroke-opacity=".65" stroke-width="2"/>
+                                    <circle cx="585" cy="66" r="6" fill="#444"/><text class="drum-label" x="585" y="111">RIDE</text>
+                                </g>
+                                <g class="drum-pad" data-drum="closedHat" role="button" tabindex="0" aria-label="Mainkan hi-hat tertutup">
+                                    <ellipse class="drum-surface drum-cymbal" cx="105" cy="187" rx="66" ry="22" transform="rotate(4 105 187)" filter="url(#drumShadow)"/>
+                                    <ellipse cx="105" cy="187" rx="43" ry="14" fill="none" stroke="#ffe89a" stroke-opacity=".6" stroke-width="2"/>
+                                    <path d="M105 179 L105 352" class="drum-hardware"/><circle cx="105" cy="185" r="5" fill="#444"/>
+                                    <text class="drum-label" x="105" y="222">HI-HAT</text>
+                                </g>
+                                <g class="drum-pad" data-drum="tom" role="button" tabindex="0" aria-label="Mainkan tom kiri">
+                                    <path class="drum-surface drum-shell" d="M190 130 Q260 111 330 130 L322 204 Q260 223 198 204Z" filter="url(#drumShadow)"/>
+                                    <ellipse class="drum-rim" cx="260" cy="132" rx="70" ry="49"/>
+                                    <ellipse class="drum-surface drum-head" cx="260" cy="132" rx="63" ry="43"/>
+                                    <ellipse cx="260" cy="132" rx="51" ry="33" fill="none" stroke="#c4c5c8" stroke-width="1.5"/>
+                                    <g class="drum-lug"><rect x="192" y="150" width="8" height="25" rx="3"/><rect x="320" y="150" width="8" height="25" rx="3"/></g>
+                                    <text class="drum-label" x="260" y="191">TOM</text>
+                                </g>
+                                <g class="drum-pad" data-drum="tom" role="button" tabindex="0" aria-label="Mainkan tom kanan">
+                                    <path class="drum-surface drum-shell" d="M350 130 Q420 111 490 130 L482 204 Q420 223 358 204Z" filter="url(#drumShadow)"/>
+                                    <ellipse class="drum-rim" cx="420" cy="132" rx="70" ry="49"/>
+                                    <ellipse class="drum-surface drum-head" cx="420" cy="132" rx="63" ry="43"/>
+                                    <ellipse cx="420" cy="132" rx="51" ry="33" fill="none" stroke="#c4c5c8" stroke-width="1.5"/>
+                                    <g class="drum-lug"><rect x="352" y="150" width="8" height="25" rx="3"/><rect x="480" y="150" width="8" height="25" rx="3"/></g>
+                                    <text class="drum-label" x="420" y="191">TOM</text>
+                                </g>
+                                <g class="drum-pad" data-drum="snare" role="button" tabindex="0" aria-label="Mainkan snare">
+                                    <path class="drum-surface drum-shell" d="M27 270 Q105 246 183 270 L176 340 Q105 363 34 340Z" filter="url(#drumShadow)"/>
+                                    <ellipse class="drum-rim" cx="105" cy="271" rx="78" ry="43"/>
+                                    <ellipse class="drum-surface drum-head" cx="105" cy="271" rx="70" ry="36"/>
+                                    <ellipse cx="105" cy="271" rx="57" ry="27" fill="none" stroke="#c4c5c8" stroke-width="1.5"/>
+                                    <g class="drum-lug"><rect x="28" y="288" width="9" height="23" rx="3"/><rect x="173" y="288" width="9" height="23" rx="3"/></g>
+                                    <text class="drum-label" x="105" y="326">SNARE</text>
+                                </g>
+                                <g class="drum-pad" data-drum="tom" role="button" tabindex="0" aria-label="Mainkan floor tom">
+                                    <path class="drum-surface drum-shell" d="M509 270 Q585 247 661 270 L652 342 Q585 365 518 342Z" filter="url(#drumShadow)"/>
+                                    <ellipse class="drum-rim" cx="585" cy="271" rx="76" ry="43"/>
+                                    <ellipse class="drum-surface drum-head" cx="585" cy="271" rx="68" ry="36"/>
+                                    <ellipse cx="585" cy="271" rx="55" ry="27" fill="none" stroke="#c4c5c8" stroke-width="1.5"/>
+                                    <g class="drum-lug"><rect x="510" y="288" width="9" height="23" rx="3"/><rect x="651" y="288" width="9" height="23" rx="3"/></g>
+                                    <text class="drum-label" x="585" y="326">FLOOR TOM</text>
+                                </g>
+                                <g class="drum-pad" data-drum="kick" role="button" tabindex="0" aria-label="Mainkan kick">
+                                    <ellipse class="drum-surface drum-shell" cx="340" cy="304" rx="121" ry="80" filter="url(#drumShadow)"/>
+                                    <ellipse class="drum-rim" cx="340" cy="302" rx="112" ry="72"/>
+                                    <ellipse class="drum-surface drum-head" cx="340" cy="301" rx="101" ry="62"/>
+                                    <ellipse cx="340" cy="301" rx="88" ry="51" fill="none" stroke="#c4c5c8" stroke-width="2"/>
+                                    <circle cx="340" cy="301" r="19" fill="#282a30" stroke="#777a80" stroke-width="3"/>
+                                    <text class="drum-label" x="340" y="365">KICK</text>
+                                </g>
+                            </svg>
+                        </section>
+                    </div>
+                </div>
+                <div class="sub-section" id="profileSection">
+                    <h1>Profil</h1>
+                    <p class="section-description">Informasi akun ini tersimpan lokal di browser.</p>
+                    <div class="profile-card">
+                        <p><strong>Nama pengguna:</strong> <span id="profileUsername"></span></p>
+                        <p><strong>Akun dibuat:</strong> <span id="profileSince"></span></p>
+                        <form id="profileForm">
+                            <div class="input-group">
+                                <label for="birthDate">Tanggal lahir</label>
+                                <input id="birthDate" type="date">
+                            </div>
+                            <button class="btn-main-action" type="submit">Simpan profil</button>
+                        </form>
+                        <p class="info-label" id="profileMessage" role="status" aria-live="polite"></p>
+                    </div>
+                </div>
+            </section>
+            <button class="logout-corner-btn" id="logoutButton" type="button">Keluar</button>
+        </div>
+    </main>
+
+    <dialog class="lyrics-dialog" id="lyricsDialog" aria-labelledby="lyricsTitle">
+        <h2 id="lyricsTitle">Lirik lagu</h2>
+        <p class="lyrics-dialog-help" id="lyricsHelp">Lirik akan mengikuti posisi lagu. Untuk mengatur lirik, gunakan format [menit:detik] di setiap baris.</p>
+        <textarea class="lyrics-editor" id="lyricsEditor" aria-label="Lirik bertimestamp" placeholder="[00:05.00] Baris lirik pertama&#10;[00:10.00] Baris lirik berikutnya"></textarea>
+        <div class="lyrics-display" id="lyricsDisplay" aria-live="polite"></div>
+        <div class="lyrics-dialog-actions">
+            <button id="lyricsEditButton" type="button">Atur lirik</button>
+            <button id="lyricsSaveButton" type="button">Simpan lirik</button>
+            <button id="lyricsCloseButton" type="button">Tutup</button>
+        </div>
+    </dialog>
+
+    <script>
+        (() => {
+            const authPage = document.getElementById('authPage');
+            const dashboardPage = document.getElementById('dashboardPage');
+            const authForm = document.getElementById('authForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const authTitle = document.getElementById('authTitle');
+            const authIntro = document.getElementById('authIntro');
+            const authSubmit = document.getElementById('authSubmit');
+            const switchPrompt = document.getElementById('switchPrompt');
+            const switchAuth = document.getElementById('switchAuth');
+            const authMessage = document.getElementById('authMessage');
+            const avatar = document.getElementById('avatar');
+            const musicInput = document.getElementById('musicInput');
+            const musicGrid = document.getElementById('musicGrid');
+            const emptyState = document.getElementById('emptyState');
+            const publicMusicGrid = document.getElementById('publicMusicGrid');
+            const publicEmptyState = document.getElementById('publicEmptyState');
+            const homeSearchInput = document.getElementById('homeSearchInput');
+            const searchInput = document.getElementById('searchInput');
+            const playlistForm = document.getElementById('playlistForm');
+            const playlistNameInput = document.getElementById('playlistName');
+            const playlistList = document.getElementById('playlistList');
+            const playlistEmptyState = document.getElementById('playlistEmptyState');
+            const videoInput = document.getElementById('videoInput');
+            const videoFeed = document.getElementById('videoFeed');
+            const videoEmptyState = document.getElementById('videoEmptyState');
+            const longVideoInput = document.getElementById('longVideoInput');
+            const longVideoFeed = document.getElementById('longVideoFeed');
+            const longVideoEmptyState = document.getElementById('longVideoEmptyState');
+            const videoPosts = [];
+            const tracks = [];
+            const publishedTracks = [];
+            let playlists = [];
+            let isRegistering = false;
+            let currentAccountKey = null;
+
+            function openMusicDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('INDmusicLibrary', 2);
+                    request.onupgradeneeded = () => {
+                        const database = request.result;
+                        if (!database.objectStoreNames.contains('tracks')) {
+                            database.createObjectStore('tracks', { keyPath: 'id' });
+                        }
+                        if (!database.objectStoreNames.contains('videos')) {
+                            database.createObjectStore('videos', { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async function saveTrack(accountKey, track) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readwrite');
+                    transaction.objectStore('tracks').put({
+                        id: track.id,
+                        accountKey,
+                        name: track.file.name,
+                        size: track.file.size,
+                        type: track.file.type,
+                        blob: track.file,
+                        published: Boolean(track.published),
+                        lyrics: track.lyrics || '',
+                        views: Number(track.views) || 0,
+                        owner: track.owner || accountKey
+                    });
+                    transaction.oncomplete = () => { database.close(); resolve(); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function saveTrackLyrics(id, lyrics) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readwrite');
+                    const store = transaction.objectStore('tracks');
+                    const request = store.get(id);
+                    request.onsuccess = () => {
+                        if (request.result) {
+                            request.result.lyrics = lyrics;
+                            store.put(request.result);
+                        }
+                    };
+                    transaction.oncomplete = () => { database.close(); resolve(); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function updateTrackPublication(id, published) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readwrite');
+                    const store = transaction.objectStore('tracks');
+                    const request = store.get(id);
+                    request.onsuccess = () => {
+                        if (request.result) {
+                            request.result.published = published;
+                            store.put(request.result);
+                        }
+                    };
+                    transaction.oncomplete = () => { database.close(); resolve(); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function loadTracks(accountKey) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readonly');
+                    const request = transaction.objectStore('tracks').getAll();
+                    request.onsuccess = () => {
+                        const savedTracks = request.result
+                            .filter((record) => record.accountKey === accountKey)
+                            .map((record) => ({
+                                id: record.id,
+                                file: { name: record.name, size: record.size, type: record.type },
+                                published: Boolean(record.published),
+                                lyrics: record.lyrics || '',
+                                views: Number(record.views) || 0,
+                                owner: record.owner || record.accountKey,
+                                url: URL.createObjectURL(record.blob)
+                            }));
+                        database.close();
+                        resolve(savedTracks);
+                    };
+                    request.onerror = () => { database.close(); reject(request.error); };
+                });
+            }
+
+            async function loadPublishedTracks() {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readonly');
+                    const request = transaction.objectStore('tracks').getAll();
+                    request.onsuccess = () => {
+                        const published = request.result
+                            .filter((record) => Boolean(record.published))
+                            .map((record) => ({
+                                id: record.id,
+                                owner: record.owner || record.accountKey,
+                                lyrics: record.lyrics || '',
+                                views: Number(record.views) || 0,
+                                file: { name: record.name, size: record.size, type: record.type },
+                                url: URL.createObjectURL(record.blob)
+                            }));
+                        database.close();
+                        resolve(published);
+                    };
+                    request.onerror = () => { database.close(); reject(request.error); };
+                });
+            }
+
+            async function incrementTrackViews(id, accountKey) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readwrite');
+                    const store = transaction.objectStore('tracks');
+                    let views = 0;
+                    const request = store.get(id);
+                    request.onsuccess = () => {
+                        if (!request.result) return;
+                        const record = request.result;
+                        record.viewedBy ||= [];
+                        views = Number(record.views) || 0;
+                        if (!record.viewedBy.includes(accountKey)) {
+                            record.viewedBy.push(accountKey);
+                            views += 1;
+                            record.views = views;
+                            store.put(record);
+                        }
+                    };
+                    transaction.oncomplete = () => { database.close(); resolve(views); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function deleteSavedTrack(id) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('tracks', 'readwrite');
+                    transaction.objectStore('tracks').delete(id);
+                    transaction.oncomplete = () => { database.close(); resolve(); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function saveVideoRecord(video) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('videos', 'readwrite');
+                    transaction.objectStore('videos').put(video);
+                    transaction.oncomplete = () => { database.close(); resolve(); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function incrementVideoViews(id, accountKey) {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('videos', 'readwrite');
+                    const store = transaction.objectStore('videos');
+                    let views = 0;
+                    const request = store.get(id);
+                    request.onsuccess = () => {
+                        if (!request.result) return;
+                        const record = request.result;
+                        record.viewedBy ||= [];
+                        views = Number(record.views) || 0;
+                        if (!record.viewedBy.includes(accountKey)) {
+                            record.viewedBy.push(accountKey);
+                            views += 1;
+                            record.views = views;
+                            store.put(record);
+                        }
+                    };
+                    transaction.oncomplete = () => { database.close(); resolve(views); };
+                    transaction.onerror = () => { database.close(); reject(transaction.error); };
+                    transaction.onabort = () => { database.close(); reject(transaction.error); };
+                });
+            }
+
+            async function loadVideoRecords() {
+                const database = await openMusicDatabase();
+                return new Promise((resolve, reject) => {
+                    const transaction = database.transaction('videos', 'readonly');
+                    const request = transaction.objectStore('videos').getAll();
+                    request.onsuccess = () => { database.close(); resolve(request.result); };
+                    request.onerror = () => { database.close(); reject(request.error); };
+                });
+            }
+
+            function makeId() {
+                return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            }
+
+            function profileStorageKey() {
+                return `musikkuProfile:${currentAccountKey}`;
+            }
+
+            function showMessage(text, color) {
+                authMessage.textContent = text;
+                authMessage.style.color = color;
+                authMessage.classList.toggle('visible', Boolean(text));
+            }
+
+            function setAuthMode(registering) {
+                isRegistering = registering;
+                authTitle.textContent = registering ? 'Buat akun' : 'Selamat datang!';
+                authIntro.textContent = registering
+                    ? 'Daftar untuk mulai mengatur musikmu.'
+                    : 'Masuk untuk membuka koleksi musikmu.';
+                authSubmit.textContent = registering ? 'Daftar' : 'Masuk';
+                switchPrompt.textContent = registering ? 'Sudah punya akun?' : 'Belum punya akun?';
+                switchAuth.textContent = registering ? 'Masuk' : 'Daftar';
+                passwordInput.autocomplete = registering ? 'new-password' : 'current-password';
+                showMessage('', '');
+            }
+
+            function readAccounts() {
+                try {
+                    const accounts = JSON.parse(localStorage.getItem('musikkuAccounts') || '{}');
+                    return accounts && typeof accounts === 'object' && !Array.isArray(accounts) ? accounts : {};
+                } catch {
+                    return {};
+                }
+            }
+
+            function playlistStorageKey() {
+                return `musikkuPlaylists:${currentAccountKey}`;
+            }
+
+            function loadPlaylists() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(playlistStorageKey()) || '[]');
+                    return Array.isArray(saved) ? saved.filter((playlist) =>
+                        playlist && typeof playlist.id === 'string' && typeof playlist.name === 'string' && Array.isArray(playlist.trackIds)
+                    ) : [];
+                } catch {
+                    return [];
+                }
+            }
+
+            function savePlaylists() {
+                try {
+                    localStorage.setItem(playlistStorageKey(), JSON.stringify(playlists));
+                } catch {
+                    alert('Playlist tidak dapat disimpan di browser ini.');
+                }
+            }
+
+            async function showDashboard(username) {
+                currentAccountKey = username.toLowerCase();
+                playlists = loadPlaylists();
+                document.getElementById('signedInUser').textContent = username;
+                document.getElementById('profileUsername').textContent = username;
+                const accounts = readAccounts();
+                const activeSince = accounts[currentAccountKey]?.activeSince;
+                document.getElementById('profileSince').textContent = activeSince
+                    ? new Date(activeSince).toLocaleString('id-ID', {
+                        day: 'numeric', month: 'long', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+                    })
+                    : 'Tanggal pendaftaran tidak tercatat';
+                try {
+                    const profile = JSON.parse(localStorage.getItem(profileStorageKey()) || '{}');
+                    document.getElementById('birthDate').value = profile.birthDate || '';
+                } catch { document.getElementById('birthDate').value = ''; }
+                authPage.classList.remove('active');
+                dashboardPage.classList.add('active');
+                tracks.forEach((track) => URL.revokeObjectURL(track.url));
+                videoPosts.forEach((video) => URL.revokeObjectURL(video.url));
+                videoPosts.length = 0;
+                tracks.length = 0;
+                renderTracks();
+                setSection('home');
+                try {
+                    const [savedTracks, publicTracks, savedVideos] = await Promise.all([
+                        loadTracks(currentAccountKey),
+                        loadPublishedTracks(),
+                        loadVideoRecords()
+                    ]);
+                    if (currentAccountKey !== username.toLowerCase()) {
+                        [...savedTracks, ...publicTracks].forEach((track) => URL.revokeObjectURL(track.url));
+                        return;
+                    }
+                    tracks.push(...savedTracks);
+                    publishedTracks.push(...publicTracks);
+                    savedVideos.sort((a, b) => b.createdAt - a.createdAt).forEach((video) => {
+                        videoPosts.push({
+                            ...video,
+                            published: video.published !== false,
+                            views: Number(video.views) || 0,
+                            url: URL.createObjectURL(video.blob)
+                        });
+                    });
+                    renderTracks();
+                    renderPlaylists();
+                    renderPublishedTracks();
+                    renderVideoFeed();
+                } catch {
+                    alert('Musik tersimpan tidak dapat dimuat dari penyimpanan browser.');
+                }
+            }
+
+            authForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+                if (!username || !password) {
+                    showMessage('Isi nama pengguna dan kata sandi terlebih dahulu.', '#c0392b');
+                    return;
+                }
+                if (username.length < 3 || password.length < 4) {
+                    showMessage('Nama pengguna minimal 3 karakter dan kata sandi minimal 4 karakter.', '#c0392b');
+                    return;
+                }
+
+                const accounts = readAccounts();
+                const accountKey = username.toLowerCase();
+                if (isRegistering) {
+                    if (accounts[accountKey]) {
+                        showMessage('Nama pengguna tersebut sudah terdaftar.', '#c0392b');
+                        return;
+                    }
+                    accounts[accountKey] = { username, password, activeSince: new Date().toISOString() };
+                    try {
+                        localStorage.setItem('musikkuAccounts', JSON.stringify(accounts));
+                    } catch {
+                        showMessage('Akun tidak dapat disimpan di browser ini.', '#c0392b');
+                        return;
+                    }
+                    setAuthMode(false);
+                    passwordInput.value = '';
+                    showMessage('Akun berhasil dibuat. Silakan masuk.', '#218838');
+                    return;
+                }
+
+                const account = accounts[accountKey];
+                if (!account || account.password !== password) {
+                    showMessage('Nama pengguna atau kata sandi tidak cocok.', '#c0392b');
+                    avatar.classList.remove('wrong-password');
+                    void avatar.offsetWidth;
+                    avatar.classList.add('wrong-password');
+                    return;
+                }
+                showMessage('', '');
+                try {
+                    localStorage.setItem('musikkuSession', accountKey);
+                } catch {
+                    showMessage('Sesi tidak dapat disimpan. Kamu mungkin perlu masuk lagi setelah memuat ulang halaman.', '#8a5a00');
+                }
+                showDashboard(account.username);
+                passwordInput.value = '';
+            });
+
+            switchAuth.addEventListener('click', () => setAuthMode(!isRegistering));
+            document.getElementById('togglePassword').addEventListener('click', (event) => {
+                const button = event.currentTarget;
+                const show = passwordInput.type === 'password';
+                passwordInput.type = show ? 'text' : 'password';
+                button.textContent = show ? 'Sembunyi' : 'Lihat';
+                button.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+                button.setAttribute('aria-pressed', String(show));
+                avatar.classList.toggle('look-away', show);
+            });
+            authPage.addEventListener('pointermove', (event) => {
+                if (avatar.classList.contains('look-away')) return;
+                avatar.querySelectorAll('.eye').forEach((eye) => {
+                    const rect = eye.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const dx = event.clientX - centerX;
+                    const dy = event.clientY - centerY;
+                    const distance = Math.hypot(dx, dy) || 1;
+                    const directionX = dx / distance;
+                    const directionY = dy / distance;
+
+                    eye.style.transform = `translate(${directionX * 3}px, ${directionY * 3}px)`;
+                    eye.querySelector('.pupil').style.transform = `translate(${directionX * 5}px, ${directionY * 5}px)`;
+                });
+            });
+            document.addEventListener('pointermove', (event) => {
+                document.querySelectorAll('.brand-eye').forEach((eye) => {
+                    const rect = eye.getBoundingClientRect();
+                    const dx = event.clientX - (rect.left + rect.width / 2);
+                    const dy = event.clientY - (rect.top + rect.height / 2);
+                    const distance = Math.hypot(dx, dy) || 1;
+                    eye.querySelector('.brand-pupil').style.transform = `translate(${dx / distance * 2}px, ${dy / distance * 2}px)`;
+                });
+            });
+            authPage.addEventListener('pointerleave', () => {
+                avatar.querySelectorAll('.eye').forEach((eye) => {
+                    eye.style.transform = '';
+                    eye.querySelector('.pupil').style.transform = '';
+                });
+            });
+            document.getElementById('profileForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                try {
+                    localStorage.setItem(profileStorageKey(), JSON.stringify({ birthDate: document.getElementById('birthDate').value }));
+                    const message = document.getElementById('profileMessage');
+                    message.textContent = 'Profil berhasil disimpan di browser ini.';
+                    message.style.color = '#218838';
+                    message.classList.add('visible');
+                } catch {
+                    alert('Profil tidak dapat disimpan di browser ini.');
+                }
+            });
+            avatar.addEventListener('animationend', () => avatar.classList.remove('wrong-password'));
+
+            function setSection(name) {
+                document.getElementById('homeSection').classList.toggle('active', name === 'home');
+                document.getElementById('librarySection').classList.toggle('active', name === 'library');
+                document.getElementById('playlistsSection').classList.toggle('active', name === 'playlists');
+                document.getElementById('uploadSection').classList.toggle('active', name === 'upload');
+                document.getElementById('videosSection').classList.toggle('active', name === 'videos');
+                document.getElementById('longVideosSection').classList.toggle('active', name === 'longVideos');
+                document.getElementById('instrumentsSection').classList.toggle('active', name === 'instruments');
+                document.getElementById('profileSection').classList.toggle('active', name === 'profile');
+                document.querySelectorAll('.menu-item').forEach((button) => {
+                    button.classList.toggle('active', button.dataset.section === name);
+                });
+                if (name === 'library') searchInput.focus({ preventScroll: true });
+            }
+
+            let instrumentAudioContext;
+            let isRecordingMusic = false;
+            let isPlayingRecording = false;
+            let recordingStartedAt = 0;
+            const recordedMusic = [];
+            const playbackTimers = [];
+            const instrumentStatus = document.getElementById('instrumentStatus');
+            const recordMusicButton = document.getElementById('recordMusicButton');
+            const playMusicButton = document.getElementById('playMusicButton');
+            const clearMusicButton = document.getElementById('clearMusicButton');
+
+            function stopMusicPlayback() {
+                playbackTimers.forEach((timer) => clearTimeout(timer));
+                playbackTimers.length = 0;
+                isPlayingRecording = false;
+            }
+
+            function updateRecordingButtons() {
+                recordMusicButton.textContent = isRecordingMusic ? '■ Hentikan rekam' : '● Mulai rekam';
+                playMusicButton.disabled = isRecordingMusic || recordedMusic.length === 0;
+                clearMusicButton.disabled = isRecordingMusic || recordedMusic.length === 0;
+            }
+
+            recordMusicButton.addEventListener('click', () => {
+                if (!isRecordingMusic) {
+                    stopMusicPlayback();
+                    recordedMusic.length = 0;
+                    recordingStartedAt = performance.now();
+                    isRecordingMusic = true;
+                    instrumentStatus.textContent = 'Merekam permainan instrumen…';
+                } else {
+                    isRecordingMusic = false;
+                    instrumentStatus.textContent = `Rekaman selesai: ${recordedMusic.length} bunyi.`;
+                }
+                updateRecordingButtons();
+            });
+            playMusicButton.addEventListener('click', () => {
+                if (!recordedMusic.length) return;
+                stopMusicPlayback();
+                isPlayingRecording = true;
+                instrumentStatus.textContent = 'Memutar rekaman…';
+                recordedMusic.forEach((event) => {
+                    playbackTimers.push(setTimeout(() => {
+                        if (event.type === 'note') playNote(event.midi, event.instrument);
+                        else playDrum(event.drum);
+                    }, event.time));
+                });
+                const endTime = recordedMusic[recordedMusic.length - 1].time + 1000;
+                playbackTimers.push(setTimeout(() => {
+                    isPlayingRecording = false;
+                    playbackTimers.length = 0;
+                    instrumentStatus.textContent = 'Pemutaran rekaman selesai.';
+                }, endTime));
+            });
+            clearMusicButton.addEventListener('click', () => {
+                stopMusicPlayback();
+                recordedMusic.length = 0;
+                instrumentStatus.textContent = 'Rekaman dihapus.';
+                updateRecordingButtons();
+            });
+
+            function getInstrumentAudio() {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) {
+                    instrumentStatus.textContent = 'Audio tidak didukung oleh browser ini.';
+                    return null;
+                }
+                instrumentAudioContext ||= new AudioContextClass();
+                if (instrumentAudioContext.state === 'suspended') instrumentAudioContext.resume();
+                return instrumentAudioContext;
+            }
+
+            function playNote(midi, instrument = 'piano') {
+                if (isRecordingMusic && !isPlayingRecording) {
+                    recordedMusic.push({ type: 'note', midi: Number(midi), instrument, time: performance.now() - recordingStartedAt });
+                }
+                const context = getInstrumentAudio();
+                if (!context) return;
+                const now = context.currentTime;
+                const frequency = 440 * (2 ** ((Number(midi) - 69) / 12));
+
+                if (instrument === 'piano') {
+                    // Layer slightly detuned piano-like strings with naturally fading harmonics.
+                    const output = context.createGain();
+                    const tone = context.createBiquadFilter();
+                    tone.type = 'lowpass';
+                    tone.frequency.setValueAtTime(Math.min(9000, frequency * 12), now);
+                    tone.Q.value = 0.5;
+                    output.gain.setValueAtTime(0.0001, now);
+                    output.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+                    output.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+                    tone.connect(output);
+                    output.connect(context.destination);
+
+                    [0, -0.8, 0.8].forEach((detune, stringIndex) => {
+                        for (let partial = 1; partial <= 7; partial++) {
+                            const oscillator = context.createOscillator();
+                            const partialGain = context.createGain();
+                            const partialFrequency = frequency * partial * (1 + (partial * partial * 0.00008));
+                            const amplitude = (1 / (partial ** 1.45)) * (stringIndex === 0 ? 1 : 0.42);
+                            oscillator.type = 'sine';
+                            oscillator.frequency.setValueAtTime(partialFrequency, now);
+                            oscillator.detune.setValueAtTime(detune, now);
+                            partialGain.gain.setValueAtTime(amplitude, now);
+                            partialGain.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(0.35, 2.2 / (partial * 0.55)));
+                            oscillator.connect(partialGain);
+                            partialGain.connect(tone);
+                            oscillator.start(now);
+                            oscillator.stop(now + 2.25);
+                        }
+                    });
+                } else if (instrument === 'guitar') {
+                    const output = context.createGain();
+                    const amp = context.createWaveShaper();
+                    const tone = context.createBiquadFilter();
+                    const delay = context.createDelay(0.3);
+                    const echoGain = context.createGain();
+                    const curve = new Float32Array(2048);
+                    for (let i = 0; i < curve.length; i++) {
+                        const x = (i * 2) / (curve.length - 1) - 1;
+                        curve[i] = Math.tanh(x * 2.2);
+                    }
+                    amp.curve = curve;
+                    amp.oversample = '4x';
+                    tone.type = 'lowpass';
+                    tone.frequency.setValueAtTime(Math.min(6500, Math.max(1800, frequency * 7)), now);
+                    tone.Q.value = 0.7;
+                    output.gain.setValueAtTime(0.0001, now);
+                    output.gain.exponentialRampToValueAtTime(0.28, now + 0.012);
+                    output.gain.exponentialRampToValueAtTime(0.12, now + 0.22);
+                    output.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+                    delay.delayTime.setValueAtTime(0.095, now);
+                    echoGain.gain.setValueAtTime(0.12, now);
+
+                    const oscillator = context.createOscillator();
+                    const stringGain = context.createGain();
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(frequency, now);
+                    oscillator.detune.setValueAtTime(-1.5, now);
+                    stringGain.gain.setValueAtTime(0.8, now);
+                    oscillator.connect(stringGain);
+                    stringGain.connect(amp);
+
+                    const harmonic = context.createOscillator();
+                    const harmonicGain = context.createGain();
+                    harmonic.type = 'triangle';
+                    harmonic.frequency.setValueAtTime(frequency * 2, now);
+                    harmonic.detune.setValueAtTime(1, now);
+                    harmonicGain.gain.setValueAtTime(0.16, now);
+                    harmonic.connect(harmonicGain);
+                    harmonicGain.connect(amp);
+
+                    amp.connect(tone);
+                    tone.connect(output);
+                    output.connect(context.destination);
+                    output.connect(delay);
+                    delay.connect(echoGain);
+                    echoGain.connect(context.destination);
+                    oscillator.start(now);
+                    harmonic.start(now);
+                    oscillator.stop(now + 2.45);
+                    harmonic.stop(now + 2.45);
+                } else {
+                    const oscillator = context.createOscillator();
+                    const gain = context.createGain();
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(frequency, now);
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+                    oscillator.connect(gain);
+                    gain.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.72);
+                }
+                instrumentStatus.textContent = `Memainkan nada ${Math.round(Number(midi))}.`;
+            }
+
+            function buildPiano() {
+                const pianoKeys = document.getElementById('pianoKeys');
+                const whiteKeys = document.getElementById('pianoWhiteKeys');
+                const whitePitchClasses = [0, 2, 4, 5, 7, 9, 11];
+                let whiteIndex = 0;
+                const blackKeys = [];
+                for (let midi = 21; midi <= 108; midi++) {
+                    const pitchClass = midi % 12;
+                    const key = document.createElement('button');
+                    key.type = 'button';
+                    key.className = `piano-key ${whitePitchClasses.includes(pitchClass) ? 'white' : 'black'}`;
+                    key.setAttribute('aria-label', `Piano, nada MIDI ${midi}`);
+                    key.addEventListener('click', () => playNote(midi));
+                    if (whitePitchClasses.includes(pitchClass)) {
+                        if (pitchClass === 0) {
+                            const label = document.createElement('span');
+                            label.textContent = `C${Math.floor(midi / 12) - 1}`;
+                            key.append(label);
+                        }
+                        whiteKeys.append(key);
+                        whiteIndex++;
+                    } else {
+                        key.style.left = `${whiteIndex * 38 - 12}px`;
+                        blackKeys.push(key);
+                    }
+                }
+                pianoKeys.style.width = `${whiteIndex * 38}px`;
+                blackKeys.forEach((key) => pianoKeys.append(key));
+            }
+
+            function buildGuitar() {
+                const notes = document.getElementById('guitarNotes');
+                const svgNamespace = 'http://www.w3.org/2000/svg';
+                const strings = [
+                    { name: 'E4', midi: 64 }, { name: 'B3', midi: 59 },
+                    { name: 'G3', midi: 55 }, { name: 'D3', midi: 50 },
+                    { name: 'A2', midi: 45 }, { name: 'E2', midi: 40 }
+                ];
+                strings.forEach((string, stringIndex) => {
+                    for (let fret = 0; fret <= 12; fret++) {
+                        const marker = document.createElementNS(svgNamespace, 'g');
+                        marker.classList.add('guitar-fret-marker');
+                        marker.setAttribute('role', 'button');
+                        marker.setAttribute('tabindex', '0');
+                        marker.setAttribute('aria-label', `Gitar senar ${string.name}, fret ${fret}`);
+                        const circle = document.createElementNS(svgNamespace, 'circle');
+                        circle.setAttribute('cx', String(294 + fret * 43));
+                        circle.setAttribute('cy', String(145 + stringIndex * 14));
+                        circle.setAttribute('r', '10');
+                        marker.append(circle);
+                        const play = () => {
+                            playNote(string.midi + fret, 'guitar');
+                            marker.classList.add('is-playing');
+                            setTimeout(() => marker.classList.remove('is-playing'), 180);
+                        };
+                        marker.addEventListener('click', play);
+                        marker.addEventListener('keydown', (event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                play();
+                            }
+                        });
+                        notes.append(marker);
+                    }
+                });
+            }
+
+            function playDrum(kind) {
+                if (isRecordingMusic && !isPlayingRecording) {
+                    recordedMusic.push({ type: 'drum', drum: kind, time: performance.now() - recordingStartedAt });
+                }
+                const context = getInstrumentAudio();
+                if (!context) return;
+                const now = context.currentTime;
+
+                function addNoise({ duration, frequency, filterType = 'highpass', volume, decay = duration, resonance = 0.7 }) {
+                    const length = Math.floor(context.sampleRate * duration);
+                    const buffer = context.createBuffer(1, length, context.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < length; i++) {
+                        const fade = Math.pow(1 - i / length, 2);
+                        data[i] = (Math.random() * 2 - 1) * fade;
+                    }
+                    const source = context.createBufferSource();
+                    const filter = context.createBiquadFilter();
+                    const gain = context.createGain();
+                    source.buffer = buffer;
+                    filter.type = filterType;
+                    filter.frequency.setValueAtTime(frequency, now);
+                    filter.Q.value = resonance;
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.exponentialRampToValueAtTime(volume, now + 0.006);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+                    source.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(context.destination);
+                    source.start(now);
+                }
+
+                if (kind === 'kick') {
+                    const oscillator = context.createOscillator();
+                    const body = context.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(125, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(46, now + 0.16);
+                    body.gain.setValueAtTime(0.0001, now);
+                    body.gain.exponentialRampToValueAtTime(0.85, now + 0.004);
+                    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+                    oscillator.connect(body);
+                    body.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.5);
+                    addNoise({ duration: 0.035, frequency: 1800, volume: 0.2, decay: 0.025 });
+                } else if (kind === 'tom') {
+                    const oscillator = context.createOscillator();
+                    const body = context.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(185, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(78, now + 0.24);
+                    body.gain.setValueAtTime(0.0001, now);
+                    body.gain.exponentialRampToValueAtTime(0.55, now + 0.008);
+                    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+                    oscillator.connect(body);
+                    body.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.54);
+                    addNoise({ duration: 0.09, frequency: 900, filterType: 'bandpass', volume: 0.08, decay: 0.07, resonance: 0.5 });
+                } else if (kind === 'snare') {
+                    addNoise({ duration: 0.24, frequency: 1900, filterType: 'bandpass', volume: 0.36, decay: 0.2, resonance: 0.8 });
+                    addNoise({ duration: 0.16, frequency: 7200, volume: 0.18, decay: 0.12 });
+                    const oscillator = context.createOscillator();
+                    const body = context.createGain();
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(185, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(95, now + 0.08);
+                    body.gain.setValueAtTime(0.0001, now);
+                    body.gain.exponentialRampToValueAtTime(0.26, now + 0.003);
+                    body.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+                    oscillator.connect(body);
+                    body.connect(context.destination);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.15);
+                } else {
+                    const isCrash = kind === 'crash';
+                    const isOpenHat = kind === 'openHat';
+                    const duration = isCrash ? 2.4 : isOpenHat ? 0.65 : 0.12;
+                    addNoise({
+                        duration,
+                        frequency: isCrash ? 4800 : 7800,
+                        volume: isCrash ? 0.22 : isOpenHat ? 0.2 : 0.16,
+                        decay: isCrash ? 2.2 : isOpenHat ? 0.58 : 0.1,
+                        resonance: 0.35
+                    });
+                    if (isCrash || isOpenHat) {
+                        addNoise({
+                            duration: isCrash ? 2.1 : 0.55,
+                            frequency: 2800,
+                            filterType: 'bandpass',
+                            volume: isCrash ? 0.08 : 0.06,
+                            decay: isCrash ? 1.9 : 0.48,
+                            resonance: 0.2
+                        });
+                    }
+                }
+                const drumName = document.querySelector(`[data-drum="${kind}"]`)?.getAttribute('aria-label') || kind;
+                instrumentStatus.textContent = `Memainkan drum: ${drumName.replace('Mainkan ', '')}.`;
+            }
+
+            buildPiano();
+            buildGuitar();
+            const instrumentPicker = document.getElementById('instrumentPicker');
+            const instrumentWorkspace = document.getElementById('instrumentWorkspace');
+            const instrumentViews = {
+                piano: document.getElementById('pianoInstrument'),
+                guitar: document.getElementById('guitarInstrument'),
+                drums: document.getElementById('drumInstrument')
+            };
+            document.querySelectorAll('.instrument-choice').forEach((choice) => {
+                choice.addEventListener('click', () => {
+                    Object.entries(instrumentViews).forEach(([name, view]) => {
+                        view.hidden = name !== choice.dataset.instrument;
+                    });
+                    instrumentPicker.hidden = true;
+                    instrumentWorkspace.hidden = false;
+                    instrumentWorkspace.classList.add('is-fullscreen');
+                });
+            });
+            document.getElementById('instrumentBack').addEventListener('click', () => {
+                if (isRecordingMusic) {
+                    isRecordingMusic = false;
+                    instrumentStatus.textContent = `Rekaman selesai: ${recordedMusic.length} bunyi.`;
+                    updateRecordingButtons();
+                }
+                instrumentWorkspace.classList.remove('is-fullscreen');
+                instrumentWorkspace.hidden = true;
+                instrumentPicker.hidden = false;
+            });
+            document.querySelectorAll('.drum-pad').forEach((pad) => {
+                pad.addEventListener('click', () => playDrum(pad.dataset.drum));
+                pad.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        playDrum(pad.dataset.drum);
+                    }
+                });
+            });
+
+            document.getElementById('homeLogo').addEventListener('click', () => setSection('home'));
+            document.querySelectorAll('.menu-item').forEach((button) => {
+                button.addEventListener('click', () => setSection(button.dataset.section));
+            });
+
+            function formatSize(bytes) {
+                if (bytes < 1024) return `${bytes} B`;
+                const units = ['KB', 'MB', 'GB'];
+                let size = bytes / 1024;
+                let unitIndex = 0;
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            const lyricsDialog = document.getElementById('lyricsDialog');
+            const lyricsEditor = document.getElementById('lyricsEditor');
+            const lyricsDisplay = document.getElementById('lyricsDisplay');
+            const lyricsHelp = document.getElementById('lyricsHelp');
+            const lyricsSaveButton = document.getElementById('lyricsSaveButton');
+            const lyricsEditButton = document.getElementById('lyricsEditButton');
+            let activeLyricsTrack = null;
+            let activeLyricsAudio = null;
+            let activeLyricsLines = [];
+            let lyricsTimeUpdateHandler = null;
+            let canEditLyrics = false;
+
+            function parseLyrics(lyrics) {
+                return String(lyrics || '').split(/\r?\n/).flatMap((line) => {
+                    const match = line.match(/^\[(\d{1,2}):([0-5]\d)(?:\.(\d{1,3}))?\](.*)$/);
+                    if (!match || !match[4].trim()) return [];
+                    const fraction = (match[3] || '0').padEnd(3, '0');
+                    return [{ time: Number(match[1]) * 60 + Number(match[2]) + Number(fraction) / 1000, text: match[4].trim() }];
+                }).sort((a, b) => a.time - b.time);
+            }
+
+            function updateLyricsHighlight() {
+                const currentTime = activeLyricsAudio?.currentTime || 0;
+                let activeIndex = -1;
+                activeLyricsLines.forEach((line, index) => {
+                    if (line.time <= currentTime) activeIndex = index;
+                });
+                lyricsDisplay.querySelectorAll('.lyrics-line').forEach((line, index) => {
+                    line.classList.toggle('active', index === activeIndex);
+                    if (index === activeIndex) line.scrollIntoView({ block: 'nearest' });
+                });
+            }
+
+            function setLyricsEditorMode(editing) {
+                lyricsEditor.hidden = !editing;
+                lyricsDisplay.hidden = editing;
+                lyricsSaveButton.hidden = !editing;
+                lyricsEditButton.hidden = editing || !canEditLyrics;
+                lyricsHelp.textContent = editing
+                    ? 'Masukkan satu baris lirik per baris dengan timestamp, misalnya [00:05.00] Baris lirik.'
+                    : 'Lirik akan mengikuti posisi lagu.';
+            }
+
+            function openLyricsDialog(track, audio, editable) {
+                if (lyricsTimeUpdateHandler && activeLyricsAudio) {
+                    activeLyricsAudio.removeEventListener('timeupdate', lyricsTimeUpdateHandler);
+                }
+                activeLyricsTrack = track;
+                activeLyricsAudio = audio;
+                canEditLyrics = editable;
+                lyricsEditor.value = track.lyrics || '';
+                activeLyricsLines = parseLyrics(track.lyrics);
+                lyricsDisplay.replaceChildren();
+                activeLyricsLines.forEach((line) => {
+                    const entry = document.createElement('p');
+                    entry.className = 'lyrics-line';
+                    entry.textContent = line.text;
+                    lyricsDisplay.append(entry);
+                });
+                lyricsTimeUpdateHandler = updateLyricsHighlight;
+                audio.addEventListener('timeupdate', lyricsTimeUpdateHandler);
+                setLyricsEditorMode(false);
+                updateLyricsHighlight();
+                if (!lyricsDialog.open) lyricsDialog.showModal();
+            }
+
+            lyricsEditButton.addEventListener('click', () => setLyricsEditorMode(true));
+            document.getElementById('lyricsCloseButton').addEventListener('click', () => lyricsDialog.close());
+            lyricsDialog.addEventListener('close', () => {
+                if (lyricsTimeUpdateHandler && activeLyricsAudio) {
+                    activeLyricsAudio.removeEventListener('timeupdate', lyricsTimeUpdateHandler);
+                }
+                activeLyricsTrack = null;
+                activeLyricsAudio = null;
+                activeLyricsLines = [];
+            });
+            lyricsSaveButton.addEventListener('click', async () => {
+                const lyrics = lyricsEditor.value.trim();
+                if (!parseLyrics(lyrics).length) {
+                    lyricsHelp.textContent = 'Tambahkan lirik dengan timestamp yang valid, misalnya [00:05.00] Baris lirik.';
+                    return;
+                }
+                try {
+                    await saveTrackLyrics(activeLyricsTrack.id, lyrics);
+                    activeLyricsTrack.lyrics = lyrics;
+                    tracks.filter((track) => track.id === activeLyricsTrack.id).forEach((track) => { track.lyrics = lyrics; });
+                    publishedTracks.filter((track) => track.id === activeLyricsTrack.id).forEach((track) => { track.lyrics = lyrics; });
+                    renderTracks();
+                    renderPublishedTracks();
+                    activeLyricsLines = parseLyrics(lyrics);
+                    lyricsDisplay.replaceChildren();
+                    activeLyricsLines.forEach((line) => {
+                        const entry = document.createElement('p');
+                        entry.className = 'lyrics-line';
+                        entry.textContent = line.text;
+                        lyricsDisplay.append(entry);
+                    });
+                    setLyricsEditorMode(false);
+                    updateLyricsHighlight();
+                } catch {
+                    lyricsHelp.textContent = 'Lirik tidak dapat disimpan di browser ini.';
+                }
+            });
+
+            function renderTracks() {
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                musicGrid.replaceChildren();
+                                    const visibleTracks = tracks.filter((track) => track.file.name.toLocaleLowerCase().includes(query));
+                    visibleTracks.forEach((track) => {
+                        const item = document.createElement('article');
+                        item.className = 'music-item';
+                        const details = document.createElement('div');
+                        details.className = 'music-details';
+                        const name = document.createElement('p');
+                        name.className = 'music-name';
+                        name.textContent = track.file.name;
+                        const size = document.createElement('p');
+                        size.className = 'music-size';
+                        size.textContent = formatSize(track.file.size);
+                        const views = document.createElement('p');
+                        views.className = 'music-size';
+                        views.textContent = `${Number(track.views) || 0} tayangan`;
+                        const audio = document.createElement('audio');
+
+                    audio.controls = true;
+                    audio.preload = 'metadata';
+                    audio.src = track.url;
+                    audio.setAttribute('aria-label', `Putar ${track.file.name}`);
+                    if (track.published) {
+                        let countedView = false;
+                        audio.addEventListener('play', async () => {
+                            if (countedView) return;
+                            countedView = true;
+                            try {
+                                track.views = await incrementTrackViews(track.id, currentAccountKey);
+                                views.textContent = `${track.views} tayangan`;
+                                publishedTracks.filter((item) => item.id === track.id).forEach((item) => { item.views = track.views; });
+                            } catch {}
+                        });
+                    }
+
+                    const playbackOptions = document.createElement('div');
+                    playbackOptions.className = 'playback-options';
+                    const speedLabel = document.createElement('label');
+                    speedLabel.className = 'visually-hidden';
+                    speedLabel.textContent = `Kecepatan pemutaran ${track.file.name}`;
+                    const speedSelect = document.createElement('select');
+                    speedSelect.setAttribute('aria-label', speedLabel.textContent);
+                    [0.5, 0.75, 1, 1.25, 1.5, 2].forEach((speed) => {
+                        const option = document.createElement('option');
+                        option.value = speed;
+                        option.textContent = `${speed}×`;
+                        if (speed === 1) option.selected = true;
+                        speedSelect.append(option);
+                    });
+                    speedSelect.addEventListener('change', () => {
+                        audio.playbackRate = Number(speedSelect.value);
+                    });
+                    const loopToggle = document.createElement('button');
+                    loopToggle.className = 'loop-toggle';
+                    loopToggle.type = 'button';
+                    loopToggle.textContent = 'Loop: Mati';
+                    loopToggle.setAttribute('aria-label', `Aktifkan loop untuk ${track.file.name}`);
+                    loopToggle.setAttribute('aria-pressed', 'false');
+                    loopToggle.addEventListener('click', () => {
+                        audio.loop = !audio.loop;
+                        loopToggle.textContent = audio.loop ? 'Loop: Nyala' : 'Loop: Mati';
+                        loopToggle.setAttribute('aria-pressed', String(audio.loop));
+                        loopToggle.setAttribute('aria-label', `${audio.loop ? 'Matikan' : 'Aktifkan'} loop untuk ${track.file.name}`);
+                    });
+                    playbackOptions.append(speedLabel, speedSelect, loopToggle);
+
+                    const lyricsButton = document.createElement('button');
+                    lyricsButton.className = 'lyrics-button';
+                    lyricsButton.type = 'button';
+                    lyricsButton.textContent = track.lyrics ? 'Lihat lirik' : 'Lirik tidak tersedia';
+                    lyricsButton.disabled = !track.lyrics;
+                    lyricsButton.title = track.lyrics ? 'Lihat lirik tersinkron' : 'Lirik tidak tersedia';
+                    lyricsButton.addEventListener('click', () => {
+                        if (track.lyrics) openLyricsDialog(track, audio, true);
+                    });
+                    const editLyricsButton = document.createElement('button');
+                    editLyricsButton.className = 'lyrics-edit-button';
+                    editLyricsButton.type = 'button';
+                    editLyricsButton.textContent = 'Atur lirik';
+                    editLyricsButton.setAttribute('aria-label', `Atur lirik ${track.file.name}`);
+                    editLyricsButton.addEventListener('click', () => openLyricsDialog(track, audio, true));
+
+                    const publishButton = document.createElement('button');
+                    publishButton.className = 'lyrics-edit-button';
+                    publishButton.type = 'button';
+                    publishButton.textContent = track.published ? 'Hapus dari Beranda' : 'Unggah ke Beranda';
+                    publishButton.setAttribute('aria-pressed', String(Boolean(track.published)));
+                    publishButton.addEventListener('click', async () => {
+                        const published = !track.published;
+                        publishButton.disabled = true;
+                        try {
+                            await updateTrackPublication(track.id, published);
+                            track.published = published;
+                            publishButton.textContent = published ? 'Hapus dari Beranda' : 'Unggah ke Beranda';
+                            publishButton.setAttribute('aria-pressed', String(published));
+                            await refreshPublishedTracks();
+                        } catch {
+                            alert('Status publikasi musik tidak dapat disimpan.');
+                        } finally {
+                            publishButton.disabled = false;
+                        }
+                    });
+
+                    const remove = document.createElement('button');
+                    remove.className = 'btn-delete';
+                    remove.type = 'button';
+                    remove.textContent = '×';
+                    remove.setAttribute('aria-label', `Hapus ${track.file.name}`);
+                    remove.addEventListener('click', () => {
+                        const index = tracks.indexOf(track);
+                        if (index !== -1) tracks.splice(index, 1);
+                        playlists.forEach((playlist) => {
+                            playlist.trackIds = playlist.trackIds.filter((id) => id !== track.id);
+                        });
+                        savePlaylists();
+                        URL.revokeObjectURL(track.url);
+                        renderTracks();
+                        renderPlaylists();
+                        deleteSavedTrack(track.id).then(refreshPublishedTracks).catch(() => {
+                            alert('Musik gagal dihapus dari penyimpanan browser.');
+                        });
+                    });
+                    details.append(name, size, views);
+                    item.append(details, audio, playbackOptions, lyricsButton, editLyricsButton, publishButton, remove);
+                    musicGrid.append(item);
+                });
+                emptyState.hidden = visibleTracks.length > 0;
+                if (tracks.length > 0 && visibleTracks.length === 0) {
+                    emptyState.textContent = 'Tidak ada musik yang cocok dengan pencarian.';
+                } else {
+                    emptyState.textContent = 'Belum ada musik. Tambahkan file audio dari perangkatmu.';
+                }
+            }
+
+            function renderPlaylists() {
+                playlistList.replaceChildren();
+                playlists.forEach((playlist) => {
+                    const card = document.createElement('section');
+                    card.className = 'playlist-card';
+                    const title = document.createElement('h2');
+                    title.textContent = playlist.name;
+                    const count = document.createElement('p');
+                    count.className = 'music-size';
+                    const playlistTracks = playlist.trackIds.map((id) => tracks.find((track) => track.id === id)).filter(Boolean);
+                    count.textContent = `${playlistTracks.length} lagu`;
+                    const addRow = document.createElement('div');
+                    addRow.className = 'playlist-add-row';
+                    const trackSelect = document.createElement('select');
+                    trackSelect.setAttribute('aria-label', `Pilih lagu untuk playlist ${playlist.name}`);
+                    const availableTracks = tracks.filter((track) => !playlist.trackIds.includes(track.id));
+                    if (availableTracks.length === 0) {
+                        const option = document.createElement('option');
+                        option.textContent = tracks.length ? 'Semua lagu sudah ditambahkan' : 'Tambahkan musik ke koleksi dulu';
+                        option.value = '';
+                        trackSelect.append(option);
+                    } else {
+                        availableTracks.forEach((track) => {
+                            const option = document.createElement('option');
+                            option.value = track.id;
+                            option.textContent = track.file.name;
+                            trackSelect.append(option);
+                        });
+                    }
+                    const addButton = document.createElement('button');
+                    addButton.className = 'playlist-add-button';
+                    addButton.type = 'button';
+                    addButton.textContent = 'Tambah lagu';
+                    addButton.disabled = availableTracks.length === 0;
+                    addButton.addEventListener('click', () => {
+                        const trackId = trackSelect.value;
+                        if (!trackId || playlist.trackIds.includes(trackId)) return;
+                        playlist.trackIds.push(trackId);
+                        savePlaylists();
+                        renderPlaylists();
+                    });
+                    addRow.append(trackSelect, addButton);
+                    const songList = document.createElement('div');
+                    songList.className = 'music-grid';
+                    playlist.trackIds.forEach((trackId) => {
+                        const track = tracks.find((item) => item.id === trackId);
+                        if (!track) return;
+                        const song = document.createElement('article');
+                        song.className = 'music-item';
+                        const name = document.createElement('p');
+                        name.className = 'music-name music-details';
+                        name.textContent = track.file.name;
+                        const audio = document.createElement('audio');
+                        audio.controls = true;
+                        audio.preload = 'metadata';
+                        audio.src = track.url;
+                        audio.setAttribute('aria-label', `Putar ${track.file.name}`);
+                        const removeButton = document.createElement('button');
+                        removeButton.className = 'btn-delete';
+                        removeButton.type = 'button';
+                        removeButton.textContent = '×';
+                        removeButton.setAttribute('aria-label', `Hapus ${track.file.name} dari playlist ${playlist.name}`);
+                        removeButton.addEventListener('click', () => {
+                            playlist.trackIds = playlist.trackIds.filter((id) => id !== trackId);
+                            savePlaylists();
+                            renderPlaylists();
+                        });
+                        song.append(name, audio, removeButton);
+                        songList.append(song);
+                    });
+                    card.append(title, count, addRow, songList);
+                    playlistList.append(card);
+                });
+                playlistEmptyState.hidden = playlists.length > 0;
+            }
+
+            playlistForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const name = playlistNameInput.value.trim();
+                if (!name) return;
+                playlists.push({
+                    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    name,
+                    trackIds: []
+                });
+                savePlaylists();
+                playlistForm.reset();
+                renderPlaylists();
+            });
+
+            function renderPublishedTracks() {
+                publicMusicGrid.replaceChildren();
+                const query = homeSearchInput.value.trim().toLocaleLowerCase();
+                const visibleTracks = publishedTracks.filter((track) =>
+                    `${track.file.name} ${track.owner}`.toLocaleLowerCase().includes(query)
+                );
+                visibleTracks.forEach((track) => {
+                    const item = document.createElement('article');
+                    item.className = 'music-item';
+                    const details = document.createElement('div');
+                    details.className = 'music-details';
+                    const owner = document.createElement('p');
+                    owner.className = 'feed-owner';
+                    owner.textContent = `Dipublikasikan oleh ${track.owner}`;
+                    const name = document.createElement('p');
+                    name.className = 'music-name';
+                    name.textContent = track.file.name;
+                    const size = document.createElement('p');
+                    size.className = 'music-size';
+                    size.textContent = formatSize(track.file.size);
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.preload = 'metadata';
+                    audio.src = track.url;
+                    audio.setAttribute('aria-label', `Putar ${track.file.name}`);
+                    const views = document.createElement('p');
+                    views.className = 'music-size';
+                    views.textContent = `${Number(track.views) || 0} tayangan`;
+                    let countedView = false;
+                    audio.addEventListener('play', async () => {
+                        if (countedView) return;
+                        countedView = true;
+                        try {
+                            track.views = await incrementTrackViews(track.id, currentAccountKey);
+                            views.textContent = `${track.views} tayangan`;
+                            tracks.filter((item) => item.id === track.id).forEach((item) => { item.views = track.views; });
+                        } catch {}
+                    });
+                    const lyricsButton = document.createElement('button');
+                    lyricsButton.className = 'lyrics-button';
+                    lyricsButton.type = 'button';
+                    lyricsButton.textContent = track.lyrics ? 'Lihat lirik' : 'Lirik tidak tersedia';
+                    lyricsButton.disabled = !track.lyrics;
+                    lyricsButton.title = track.lyrics ? 'Lihat lirik tersinkron' : 'Lirik tidak tersedia';
+                    lyricsButton.addEventListener('click', () => {
+                        if (track.lyrics) openLyricsDialog(track, audio, false);
+                    });
+                    details.append(owner, name, size, views);
+                    item.append(details, audio, lyricsButton);
+                    publicMusicGrid.append(item);
+                });
+                publicEmptyState.hidden = visibleTracks.length > 0;
+                publicEmptyState.textContent = publishedTracks.length > 0
+                    ? 'Tidak ada musik yang cocok dengan pencarian.'
+                    : 'Belum ada musik yang dipublikasikan.';
+            }
+
+            function renderVideoFeed() {
+                videoFeed.replaceChildren();
+                const visibleShortVideos = videoPosts.filter((post) =>
+                    post.kind !== 'long' && (post.published || post.accountKey === currentAccountKey)
+                );
+                visibleShortVideos.forEach((post) => {
+                    const card = document.createElement('article');
+                    card.className = 'short-video-card';
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    video.src = post.url;
+                    video.setAttribute('aria-label', `Video pendek ${post.name}`);
+                    let countedView = false;
+                    video.addEventListener('play', async () => {
+                        if (countedView) return;
+                        countedView = true;
+                        try {
+                            post.views = await incrementVideoViews(post.id, currentAccountKey);
+                            views.textContent = `${post.views} tayangan`;
+                        } catch {}
+                    });
+                    const actions = document.createElement('div');
+                    actions.className = 'video-actions';
+                    const liked = (post.likes || []).includes(currentAccountKey);
+                    const likeButton = document.createElement('button');
+                    likeButton.type = 'button';
+                    likeButton.textContent = `♥ ${post.likes?.length || 0}`;
+                    likeButton.setAttribute('aria-label', 'Sukai video');
+                    likeButton.setAttribute('aria-pressed', String(liked));
+                    likeButton.addEventListener('click', async () => {
+                        post.likes ||= [];
+                        const index = post.likes.indexOf(currentAccountKey);
+                        if (index === -1) post.likes.push(currentAccountKey);
+                        else post.likes.splice(index, 1);
+                        likeButton.textContent = `♥ ${post.likes.length}`;
+                        likeButton.setAttribute('aria-pressed', String(index === -1));
+                        try { await saveVideoRecord(post); } catch { alert('Like gagal disimpan.'); }
+                    });
+                    const commentButton = document.createElement('button');
+                    commentButton.type = 'button';
+                    commentButton.textContent = `Komentar ${post.comments?.length || 0}`;
+                    commentButton.addEventListener('click', async () => {
+                        const text = prompt('Tulis komentar:');
+                        if (!text || !text.trim()) return;
+                        post.comments ||= [];
+                        post.comments.push({ user: document.getElementById('signedInUser').textContent, text: text.trim() });
+                        try { await saveVideoRecord(post); renderVideoFeed(); } catch { alert('Komentar gagal disimpan.'); }
+                    });
+                    const shareButton = document.createElement('button');
+                    shareButton.type = 'button';
+                    shareButton.textContent = 'Bagikan';
+                    shareButton.addEventListener('click', async () => {
+                        const shareText = `Video: ${post.name} — ${post.owner}`;
+                        try {
+                            if (navigator.share) await navigator.share({ title: 'INDmusic', text: shareText });
+                            else if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(shareText);
+                                alert('Info video disalin. File hanya tersedia di browser ini.');
+                            } else alert(shareText);
+                        } catch (error) {
+                            if (error.name !== 'AbortError') alert('Video belum dapat dibagikan dari browser ini.');
+                        }
+                    });
+                    const remixButton = document.createElement('button');
+                    remixButton.type = 'button';
+                    remixButton.textContent = 'Remix';
+                    remixButton.addEventListener('click', async () => {
+                        const remix = {
+                            id: makeId(), accountKey: currentAccountKey,
+                            owner: document.getElementById('signedInUser').textContent,
+                            name: post.name, type: post.type, size: post.size, blob: post.blob,
+                            likes: [], comments: [], views: 0, published: false,
+                            remixFrom: post.owner, createdAt: Date.now()
+                        };
+                        try {
+                            await saveVideoRecord(remix);
+                            videoPosts.unshift({ ...remix, url: URL.createObjectURL(remix.blob) });
+                            renderVideoFeed();
+                        } catch { alert('Remix gagal disimpan.'); }
+                    });
+                    actions.append(likeButton, commentButton, shareButton, remixButton);
+                    if (post.accountKey === currentAccountKey) {
+                        const publishButton = document.createElement('button');
+                        publishButton.type = 'button';
+                        publishButton.textContent = post.published ? 'Hapus dari FYP' : 'Unggah ke FYP';
+                        publishButton.setAttribute('aria-pressed', String(Boolean(post.published)));
+                        publishButton.addEventListener('click', async () => {
+                            publishButton.disabled = true;
+                            post.published = !post.published;
+                            try {
+                                await saveVideoRecord(post);
+                                renderVideoFeed();
+                            } catch {
+                                post.published = !post.published;
+                                alert('Status publikasi video tidak dapat disimpan.');
+                                publishButton.disabled = false;
+                            }
+                        });
+                        actions.append(publishButton);
+                    }
+                    const caption = document.createElement('div');
+                    caption.className = 'video-caption';
+                    caption.textContent = `${post.owner} · ${post.name}${post.remixFrom ? ` · Remix dari ${post.remixFrom}` : ''}`;
+                    const views = document.createElement('p');
+                    views.className = 'video-views';
+                    views.textContent = `${Number(post.views) || 0} tayangan`;
+                    const comments = document.createElement('ul');
+                    comments.className = 'video-comments';
+                    (post.comments || []).forEach((comment) => {
+                        const entry = document.createElement('li');
+                        entry.textContent = `${comment.user}: ${comment.text}`;
+                        comments.append(entry);
+                    });
+                    card.append(video, actions, caption, views, comments);
+                    videoFeed.append(card);
+                });
+                videoEmptyState.hidden = visibleShortVideos.length > 0;
+                renderLongVideoFeed();
+                renderPublishedLongVideos();
+            }
+
+            function renderPublishedLongVideos() {
+                const list = document.getElementById('publicLongVideoList');
+                const empty = document.getElementById('publicLongVideoEmptyState');
+                list.replaceChildren();
+                const query = homeSearchInput.value.trim().toLocaleLowerCase();
+                const allPublishedLongVideos = videoPosts.filter((post) => post.kind === 'long' && post.published);
+                const publishedLongVideos = allPublishedLongVideos.filter((post) =>
+                    `${post.name} ${post.owner}`.toLocaleLowerCase().includes(query)
+                );
+                publishedLongVideos.forEach((post) => {
+                    const card = document.createElement('article');
+                    card.className = 'public-long-video-card';
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    video.src = post.url;
+                    video.setAttribute('aria-label', `Video panjang ${post.name}`);
+                    const info = document.createElement('div');
+                    info.className = 'public-long-video-info';
+                    const caption = document.createElement('p');
+                    caption.textContent = `${post.owner} · ${post.name}`;
+                    const views = document.createElement('p');
+                    views.textContent = `${Number(post.views) || 0} tayangan`;
+                    let countedView = false;
+                    video.addEventListener('play', async () => {
+                        if (countedView) return;
+                        countedView = true;
+                        try {
+                            post.views = await incrementVideoViews(post.id, currentAccountKey);
+                            views.textContent = `${post.views} tayangan`;
+                        } catch {}
+                    });
+                    info.append(caption, views);
+                    card.append(video, info);
+                    list.append(card);
+                });
+                empty.hidden = publishedLongVideos.length > 0;
+                empty.textContent = allPublishedLongVideos.length > 0
+                    ? 'Tidak ada video panjang yang cocok dengan pencarian.'
+                    : 'Belum ada video panjang yang dipublikasikan.';
+            }
+
+            function renderLongVideoFeed() {
+                longVideoFeed.replaceChildren();
+                const longVideos = videoPosts.filter((post) =>
+                    post.kind === 'long' && (post.published || post.accountKey === currentAccountKey)
+                );
+                longVideos.forEach((post) => {
+                    const card = document.createElement('article');
+                    card.className = 'short-video-card';
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    video.src = post.url;
+                    video.setAttribute('aria-label', `Video panjang ${post.name}`);
+                    const actions = document.createElement('div');
+                    actions.className = 'video-actions';
+                    if (post.accountKey === currentAccountKey) {
+                        const publishButton = document.createElement('button');
+                        publishButton.type = 'button';
+                        publishButton.textContent = post.published ? 'Hapus dari Beranda' : 'Publikasikan ke Beranda';
+                        publishButton.setAttribute('aria-pressed', String(Boolean(post.published)));
+                        publishButton.addEventListener('click', async () => {
+                            publishButton.disabled = true;
+                            post.published = !post.published;
+                            try {
+                                await saveVideoRecord(post);
+                                renderVideoFeed();
+                            } catch {
+                                post.published = !post.published;
+                                alert('Status publikasi video tidak dapat disimpan.');
+                                publishButton.disabled = false;
+                            }
+                        });
+                        actions.append(publishButton);
+                    }
+                    const caption = document.createElement('div');
+                    caption.className = 'video-caption';
+                    caption.textContent = `${post.owner} · ${post.name}`;
+                    const views = document.createElement('p');
+                    views.className = 'video-views';
+                    views.textContent = `${Number(post.views) || 0} tayangan`;
+                    let countedView = false;
+                    video.addEventListener('play', async () => {
+                        if (countedView) return;
+                        countedView = true;
+                        try {
+                            post.views = await incrementVideoViews(post.id, currentAccountKey);
+                            views.textContent = `${post.views} tayangan`;
+                        } catch {}
+                    });
+                    card.append(video, actions, caption, views);
+                    longVideoFeed.append(card);
+                });
+                longVideoEmptyState.hidden = longVideos.length > 0;
+            }
+
+            async function refreshPublishedTracks() {
+                publishedTracks.forEach((track) => URL.revokeObjectURL(track.url));
+                publishedTracks.length = 0;
+                try {
+                    publishedTracks.push(...await loadPublishedTracks());
+                    renderPublishedTracks();
+                } catch {
+                    alert('Publikasi tidak dapat dimuat dari penyimpanan browser.');
+                }
+            }
+
+            musicInput.addEventListener('change', () => {
+                const files = Array.from(musicInput.files || []);
+                files.forEach((file) => {
+                    if (!file.type.startsWith('audio/')) return;
+                    const track = {
+                        id: `${currentAccountKey}-${crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`,
+                        file,
+                        owner: document.getElementById('signedInUser').textContent,
+                        published: false,
+                        url: URL.createObjectURL(file)
+                    };
+                    tracks.push(track);
+                    saveTrack(currentAccountKey, track).then(refreshPublishedTracks).catch(() => {
+                        alert(`File "${file.name}" tidak dapat disimpan di browser.`);
+                    });
+                });
+                musicInput.value = '';
+                renderTracks();
+                renderPlaylists();
+                if (files.length > 0) setSection('library');
+            });
+            searchInput.addEventListener('input', renderTracks);
+            homeSearchInput.addEventListener('input', () => {
+                renderPublishedTracks();
+                renderPublishedLongVideos();
+            });
+            function getVideoDuration(file) {
+                return new Promise((resolve, reject) => {
+                    const url = URL.createObjectURL(file);
+                    const probe = document.createElement('video');
+                    probe.preload = 'metadata';
+                    probe.onloadedmetadata = () => {
+                        URL.revokeObjectURL(url);
+                        resolve(probe.duration);
+                    };
+                    probe.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('Metadata video tidak dapat dibaca.'));
+                    };
+                    probe.src = url;
+                });
+            }
+
+            async function uploadVideos(input, kind) {
+                const files = Array.from(input.files || []);
+                input.value = '';
+                for (const file of files) {
+                    if (!file.type.startsWith('video/')) continue;
+                    if (kind === 'long') {
+                        try {
+                            const duration = await getVideoDuration(file);
+                            if (!Number.isFinite(duration) || duration > 2 * 60 * 60) {
+                                alert(`Video "${file.name}" melebihi batas durasi 2 jam atau durasinya tidak dapat dibaca.`);
+                                continue;
+                            }
+                        } catch {
+                            alert(`Durasi video "${file.name}" tidak dapat diperiksa, jadi file tidak diunggah.`);
+                            continue;
+                        }
+                    }
+                    const record = {
+                        id: makeId(), accountKey: currentAccountKey,
+                        owner: document.getElementById('signedInUser').textContent,
+                        name: file.name, type: file.type, size: file.size, blob: file,
+                        kind, likes: [], comments: [], views: 0, published: false, createdAt: Date.now()
+                    };
+                    try {
+                        await saveVideoRecord(record);
+                        videoPosts.unshift({ ...record, url: URL.createObjectURL(file) });
+                    } catch {
+                        alert(`Video "${file.name}" tidak dapat disimpan. Penyimpanan browser mungkin penuh.`);
+                    }
+                }
+                renderVideoFeed();
+                if (files.length) setSection(kind === 'long' ? 'longVideos' : 'videos');
+            }
+
+            videoInput.addEventListener('change', () => uploadVideos(videoInput, 'short'));
+            longVideoInput.addEventListener('change', () => uploadVideos(longVideoInput, 'long'));
+
+            try {
+                const savedSession = localStorage.getItem('musikkuSession');
+                const savedAccount = savedSession && readAccounts()[savedSession];
+                if (savedAccount && typeof savedAccount.username === 'string') {
+                    showDashboard(savedAccount.username);
+                } else if (savedSession) {
+                    localStorage.removeItem('musikkuSession');
+                }
+            } catch {}
+
+            document.getElementById('logoutButton').addEventListener('click', () => {
+                try { localStorage.removeItem('musikkuSession'); } catch {}
+                tracks.forEach((track) => URL.revokeObjectURL(track.url));
+                publishedTracks.forEach((track) => URL.revokeObjectURL(track.url));
+                videoPosts.forEach((video) => URL.revokeObjectURL(video.url));
+                videoPosts.length = 0;
+                tracks.length = 0;
+                publishedTracks.length = 0;
+                renderVideoFeed();
+                playlists = [];
+                renderPlaylists();
+                renderPublishedTracks();
+                currentAccountKey = null;
+                renderTracks();
+                searchInput.value = '';
+                dashboardPage.classList.remove('active');
+                authPage.classList.add('active');
+                usernameInput.value = '';
+                passwordInput.value = '';
+                setAuthMode(false);
+            });
+        })();
+    </script>
+</body>
+</html>
